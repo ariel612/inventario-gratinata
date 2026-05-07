@@ -100,7 +100,7 @@ function saveS(){
   },600);
 }
 function saveCat(){db.collection("gratinata").doc("catalogo").set({items:S.cat});}
-function gv(p,n,f,fb){var k=bk(p,n);fb=fb===undefined?"":fb;return(S.sk[k]&&S.sk[k][f]!==undefined)?S.sk[k][f]:fb;}
+function gv(p,n,f,fb){var k=bk(p,n);if(fb===undefined)fb="";return(S.sk[k]&&S.sk[k][f]!==undefined)?S.sk[k][f]:fb;}
 function gp(p,n){var k=bk(p,n);return(S.pv[k]&&S.pv[k].stock!==undefined)?S.pv[k].stock:null;}
 function upd(p,n,f,v){var k=bk(p,n);S.sk=Object.assign({},S.sk);S.sk[k]=Object.assign({},S.sk[k]||{});S.sk[k][f]=v;S.msg="Guardando...";render();saveS();}
 function tot(){return S.cat.reduce(function(a,g){return a+g.i.length;},0);}
@@ -112,22 +112,22 @@ function render(){
   var m=S.mode,tab=S.tab;
   var h='<div class="hdr"><div class="hdr-top"><div><div style="font-size:17px;font-weight:600">Gratinata Pizza</div><div class="fecha">'+wl()+'</div></div><div class="smsg">'+S.msg+'</div></div>';
   h+='<div class="tabs">';
-  h+='<button class="tab'+(m==="cocina"?" active":"")+('"')+' onclick="sM(0)">Modo cocina</button>';
-  h+='<button class="tab'+(m==="administrador"?" active":"")+('"')+' onclick="sM(1)">Modo administrador</button>';
+  h+='<button class="tab'+(m==="cocina"?" active":"")+'" data-m="cocina">Modo cocina</button>';
+  h+='<button class="tab'+(m==="administrador"?" active":"")+'" data-m="administrador">Modo administrador</button>';
   h+='</div>';
   h+='<div class="pb-lbl"><span>Progreso</span><span>'+f+'/'+t+'</span></div><div class="pb"><div class="pbf" style="width:'+pct+'%"></div></div></div>';
   if(m==="administrador"){
     h+='<div class="ap"><div class="sg"><div class="sc"><div class="lbl">Bajo minimo</div><div class="val '+(lw.length>0?"dng":"ok")+'">'+lw.length+'</div></div><div class="sc"><div class="lbl">Completado</div><div class="val">'+pct+'%</div></div></div>';
     if(lw.length>0){h+='<div class="ab"><div class="at">Bajo minimo</div>';lw.forEach(function(i){h+='<div class="ai">'+i.n+' stock:'+gv(i.p,i.n,"stock")+'/min:'+i.m+' ('+i.p+')</div>';});h+='</div>';}
     h+='<div class="atbs">';
-    h+='<button class="atb'+(tab==="ver"?" active":"")+('"')+' onclick="sT(0)">Ver</button>';
-    h+='<button class="atb'+(tab==="editar"?" active":"")+('"')+' onclick="sT(1)">Editar</button>';
-    h+='<button class="atb'+(tab==="agregar"?" active":"")+('"')+' onclick="sT(2)">Agregar</button>';
+    h+='<button class="atb'+(tab==="ver"?" active":"")+'" data-t="ver">Ver</button>';
+    h+='<button class="atb'+(tab==="editar"?" active":"")+'" data-t="editar">Editar</button>';
+    h+='<button class="atb'+(tab==="agregar"?" active":"")+'" data-t="agregar">Agregar</button>';
     h+='</div>';
     if(tab==="agregar"){
-      h+='<div class="af"><div class="fld"><label>Proveedor</label><select onchange="niP(this.value)"><option value="">Seleccionar</option>'+S.cat.map(function(g){return '<option value="'+g.p+'">'+g.p+'</option>';}).join('')+'<option value="__nuevo__">+ Nuevo</option></select></div>';
-      if(S.ni.p==="__nuevo__")h+='<div class="fld"><label>Nuevo proveedor</label><input value="'+S.ap+'" oninput="setAP(this.value)"/></div>';
-      h+='<div class="fld"><label>Nombre producto</label><input value="'+S.ni.n+'" oninput="niN(this.value)"/></div><div class="fld"><label>Minimo</label><input type="number" min="0" step="0.5" value="'+S.ni.m+'" oninput="niM(this.value)"/></div><button class="btn btnp" onclick="addI()">+ Agregar</button></div>';
+      h+='<div class="af"><div class="fld"><label>Proveedor</label><select id="sel-prov"><option value="">Seleccionar</option>'+S.cat.map(function(g){return '<option value="'+g.p+'">'+g.p+'</option>';}).join('')+'<option value="__nuevo__">+ Nuevo</option></select></div>';
+      if(S.ni.p==="__nuevo__")h+='<div class="fld"><label>Nuevo proveedor</label><input id="inp-ap" value="'+S.ap+'"/></div>';
+      h+='<div class="fld"><label>Nombre producto</label><input id="inp-nn" value="'+S.ni.n+'"/></div><div class="fld"><label>Minimo</label><input type="number" id="inp-nm" min="0" step="0.5" value="'+S.ni.m+'"/></div><button class="btn btnp" id="btn-add">+ Agregar</button></div>';
     }
     h+='</div>';
   }
@@ -139,72 +139,99 @@ function render(){
         var sk=gv(g.p,item.n,"stock",""),pr=gv(g.p,item.n,"procesado",false);
         var sn=parseFloat(sk),bajo=(!isNaN(sn)&&item.m>0&&sn<item.m);
         var pv=gp(g.p,item.n),df=(pv!==null&&sk!=="")?(sn-parseFloat(pv)):null;
-        var pe=encodeURIComponent(g.p),ne=encodeURIComponent(item.n);
         var ped=gv(g.p,item.n,"pedido","");
-        h+='<div class="row">';
-        if(m==="cocina")h+='<div class="chk'+(pr?" on":"")+'" onclick="tog('+pe+','+ne+')"></div>';
+        h+='<div class="row" data-p="'+g.p+'" data-n="'+item.n+'">';
+        if(m==="cocina")h+='<div class="chk'+(pr?" on":"")+'" data-action="tog"></div>';
         h+='<div class="info"><div class="nom'+(pr&&m==="cocina"?" proc":"")+'">'+item.n+'</div>';
         if(item.m>0)h+='<div class="mn'+(bajo?" bajo":"")+'">min:'+item.m+(bajo?" BAJO":"")+' </div>';
         h+='</div>';
         if(m==="administrador"&&tab==="ver"&&df!==null)h+='<span class="df '+(df>=0?"up":"dn")+'">'+(df>=0?"+":"")+df.toFixed(1)+'</span>';
         if(m==="administrador"&&tab==="editar"){
-          h+='<div class="ebs"><button class="be" onclick="opE('+pe+','+ne+','+item.m+')">Editar</button><button class="bd" onclick="delI('+pe+','+ne+')">Eliminar</button></div>';
+          h+='<div class="ebs"><button class="be" data-action="edit" data-min="'+item.m+'">Editar</button><button class="bd" data-action="del">Eliminar</button></div>';
         } else {
-          h+='<input type="number" min="0" step="0.1" class="is'+(bajo?" bajo":"")+'" value="'+sk+'" placeholder="0" oninput="upS('+pe+','+ne+',this.value)"/>';
-          if(m==="administrador"&&tab==="ver")h+='<input type="number" min="0" step="1" class="ip" placeholder="ped" value="'+ped+'" oninput="upP('+pe+','+ne+',this.value)"/>';
+          h+='<input type="number" min="0" step="0.1" class="is'+(bajo?" bajo":"")+'" value="'+sk+'" placeholder="0" data-action="stock"/>';
+          if(m==="administrador"&&tab==="ver")h+='<input type="number" min="0" step="1" class="ip" value="'+ped+'" placeholder="ped" data-action="pedido"/>';
         }
         h+='</div>';
       });
     });
     h+='</div>';
   }
-  if(m==="cocina")h+='<div class="ftr"><div class="ftri"><div class="ftrc">'+f+'/'+t+' completados</div><button class="btn btns" style="width:auto;padding:8px 14px" onclick="markAll()">Todos procesados</button></div></div>';
-  if(m==="administrador"&&tab==="ver")h+='<div class="ftr"><div class="ftri"><button class="btn btns" style="flex:1;font-size:12px" onclick="dlInv()">Inventario</button><button class="btn btnp" style="flex:1;font-size:12px" onclick="dlPed()">Pedido</button></div></div>';
-  if(S.modal)h+='<div class="mo"><div class="md"><div class="mt">Editar producto</div><div class="fld"><label>Nombre</label><input value="'+S.modal.nombre+'" oninput="emN(this.value)"/></div><div class="fld"><label>Minimo</label><input type="number" min="0" step="0.5" value="'+S.modal.min+'" oninput="emM(this.value)"/></div><div class="mbs"><button class="btn btns" onclick="clE()">Cancelar</button><button class="btn btnp" onclick="svE()">Guardar</button></div></div></div>';
+  if(m==="cocina")h+='<div class="ftr"><div class="ftri"><div class="ftrc">'+f+'/'+t+' completados</div><button class="btn btns" style="width:auto;padding:8px 14px" id="btn-all">Todos procesados</button></div></div>';
+  if(m==="administrador"&&tab==="ver")h+='<div class="ftr"><div class="ftri"><button class="btn btns" style="flex:1;font-size:12px" id="btn-inv">Inventario</button><button class="btn btnp" style="flex:1;font-size:12px" id="btn-ped">Pedido</button></div></div>';
+  if(S.modal)h+='<div class="mo"><div class="md"><div class="mt">Editar producto</div><div class="fld"><label>Nombre</label><input id="em-n" value="'+S.modal.nombre+'"/></div><div class="fld"><label>Minimo</label><input type="number" id="em-m" min="0" step="0.5" value="'+S.modal.min+'"/></div><div class="mbs"><button class="btn btns" id="btn-ce">Cancelar</button><button class="btn btnp" id="btn-se">Guardar</button></div></div></div>';
   document.getElementById("app").innerHTML=h;
+  bindEvents();
 }
-window.sM=function(v){S.mode=v===0?"cocina":"administrador";S.tab="ver";render();};
-window.sT=function(v){S.tab=v===0?"ver":v===1?"editar":"agregar";render();};
-window.upS=function(pe,ne,v){upd(decodeURIComponent(pe),decodeURIComponent(ne),"stock",v);};
-window.upP=function(pe,ne,v){upd(decodeURIComponent(pe),decodeURIComponent(ne),"pedido",v);};
-window.tog=function(pe,ne){var p=decodeURIComponent(pe),n=decodeURIComponent(ne);upd(p,n,"procesado",!gv(p,n,"procesado",false));};
-window.markAll=function(){S.cat.forEach(function(g){g.i.forEach(function(i){upd(g.p,i.n,"procesado",true);});});};
-window.niP=function(v){S.ni.p=v;render();};
-window.niN=function(v){S.ni.n=v;};
-window.niM=function(v){S.ni.m=v;};
-window.setAP=function(v){S.ap=v.toUpperCase();};
-window.addI=function(){
-  var prov=(S.ni.p==="__nuevo__"?S.ap:S.ni.p).toUpperCase();
-  if(!prov||!S.ni.n.trim())return;
-  var cat=S.cat.slice(),idx=cat.findIndex(function(g){return g.p===prov;});
-  var item={n:S.ni.n.trim(),m:parseFloat(S.ni.m)||0};
-  if(idx>=0)cat[idx]=Object.assign({},cat[idx],{i:cat[idx].i.concat([item])});
-  else cat.push({p:prov,i:[item]});
-  S.cat=cat;S.ni={p:"",n:"",m:""};S.ap="";
-  saveCat();render();
-};
-window.delI=function(pe,ne){
-  var p=decodeURIComponent(pe),n=decodeURIComponent(ne);
-  S.cat=S.cat.map(function(g){return g.p!==p?g:Object.assign({},g,{i:g.i.filter(function(i){return i.n!==n;})});}).filter(function(g){return g.i.length>0;});
-  saveCat();render();
-};
-window.opE=function(pe,ne,min){S.modal={p:decodeURIComponent(pe),o:decodeURIComponent(ne),nombre:decodeURIComponent(ne),min:min};render();};
-window.clE=function(){S.modal=null;render();};
-window.emN=function(v){if(S.modal)S.modal.nombre=v;};
-window.emM=function(v){if(S.modal)S.modal.min=v;};
-window.svE=function(){
-  var pr=S.modal.p,or=S.modal.o,nb=S.modal.nombre,mn=S.modal.min;
-  S.cat=S.cat.map(function(g){return g.p!==pr?g:Object.assign({},g,{i:g.i.map(function(i){return i.n===or?{n:nb,m:parseFloat(mn)||0}:i;})});});
-  S.modal=null;saveCat();render();
-};
-window.dlInv=function(){
+function bindEvents(){
+  // Tabs modo
+  document.querySelectorAll("[data-m]").forEach(function(el){
+    el.addEventListener("click",function(){S.mode=this.dataset.m;S.tab="ver";render();});
+  });
+  // Tabs admin
+  document.querySelectorAll("[data-t]").forEach(function(el){
+    el.addEventListener("click",function(){S.tab=this.dataset.t;render();});
+  });
+  // Rows
+  document.querySelectorAll(".row").forEach(function(row){
+    var p=row.dataset.p, n=row.dataset.n;
+    var tog=row.querySelector("[data-action=tog]");
+    if(tog)tog.addEventListener("click",function(){upd(p,n,"procesado",!gv(p,n,"procesado",false));});
+    var sk=row.querySelector("[data-action=stock]");
+    if(sk)sk.addEventListener("input",function(){upd(p,n,"stock",this.value);});
+    var pd=row.querySelector("[data-action=pedido]");
+    if(pd)pd.addEventListener("input",function(){upd(p,n,"pedido",this.value);});
+    var ed=row.querySelector("[data-action=edit]");
+    if(ed)ed.addEventListener("click",function(){S.modal={p:p,o:n,nombre:n,min:this.dataset.min};render();});
+    var dl=row.querySelector("[data-action=del]");
+    if(dl)dl.addEventListener("click",function(){
+      S.cat=S.cat.map(function(g){return g.p!==p?g:Object.assign({},g,{i:g.i.filter(function(i){return i.n!==n;})});}).filter(function(g){return g.i.length>0;});
+      saveCat();render();
+    });
+  });
+  // Botones
+  var ba=document.getElementById("btn-all");
+  if(ba)ba.addEventListener("click",function(){S.cat.forEach(function(g){g.i.forEach(function(i){upd(g.p,i.n,"procesado",true);});});});
+  var bi=document.getElementById("btn-inv");
+  if(bi)bi.addEventListener("click",dlInv);
+  var bp=document.getElementById("btn-ped");
+  if(bp)bp.addEventListener("click",dlPed);
+  var sp=document.getElementById("sel-prov");
+  if(sp)sp.addEventListener("change",function(){S.ni.p=this.value;render();});
+  var ap=document.getElementById("inp-ap");
+  if(ap)ap.addEventListener("input",function(){S.ap=this.value.toUpperCase();});
+  var nn=document.getElementById("inp-nn");
+  if(nn)nn.addEventListener("input",function(){S.ni.n=this.value;});
+  var nm=document.getElementById("inp-nm");
+  if(nm)nm.addEventListener("input",function(){S.ni.m=this.value;});
+  var ba2=document.getElementById("btn-add");
+  if(ba2)ba2.addEventListener("click",function(){
+    var prov=(S.ni.p==="__nuevo__"?S.ap:S.ni.p).toUpperCase();
+    if(!prov||!S.ni.n.trim())return;
+    var cat=S.cat.slice(),idx=cat.findIndex(function(g){return g.p===prov;});
+    var item={n:S.ni.n.trim(),m:parseFloat(S.ni.m)||0};
+    if(idx>=0)cat[idx]=Object.assign({},cat[idx],{i:cat[idx].i.concat([item])});
+    else cat.push({p:prov,i:[item]});
+    S.cat=cat;S.ni={p:"",n:"",m:""};S.ap="";
+    saveCat();render();
+  });
+  var ce=document.getElementById("btn-ce");
+  if(ce)ce.addEventListener("click",function(){S.modal=null;render();});
+  var se=document.getElementById("btn-se");
+  if(se)se.addEventListener("click",function(){
+    var pr=S.modal.p,or=S.modal.o,nb=document.getElementById("em-n").value,mn=document.getElementById("em-m").value;
+    S.cat=S.cat.map(function(g){return g.p!==pr?g:Object.assign({},g,{i:g.i.map(function(i){return i.n===or?{n:nb,m:parseFloat(mn)||0}:i;})});});
+    S.modal=null;saveCat();render();
+  });
+}
+function dlInv(){
   var lines=["Inventario - Gratinata Pizza","Semana: "+new Date().toLocaleDateString("es-CL"),""];
   S.cat.forEach(function(g){lines.push("== "+g.p+" ==");g.i.forEach(function(i){lines.push("["+(gv(g.p,i.n,"procesado",false)?"OK":" ")+"] "+i.n+" | Stock: "+(gv(g.p,i.n,"stock")||"-")+" | Min: "+i.m);});lines.push("");});
   var b=new Blob([lines.join("\n")],{type:"text/plain"});
   var u=URL.createObjectURL(b),a=document.createElement("a");
   a.href=u;a.download="inventario_"+new Date().toISOString().slice(0,10)+".txt";a.click();URL.revokeObjectURL(u);
-};
-window.dlPed=function(){
+}
+function dlPed(){
   var lines=[];
   S.cat.forEach(function(g){
     var its=g.i.filter(function(i){return gv(g.p,i.n,"pedido","")!=="";});
@@ -217,7 +244,7 @@ window.dlPed=function(){
   var b=new Blob([lines.join("\n")],{type:"text/plain"});
   var u=URL.createObjectURL(b),a=document.createElement("a");
   a.href=u;a.download="pedido_"+new Date().toISOString().slice(0,10)+".txt";a.click();URL.revokeObjectURL(u);
-};
+}
 load();
 </script>
 </body>
