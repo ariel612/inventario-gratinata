@@ -142,13 +142,13 @@ function render(){
         var pe=encodeURIComponent(g.p),ne=encodeURIComponent(item.n);
         var ped=gv(g.p,item.n,"pedido","");
         h+='<div class="row">';
-        if(m==="cocina")h+='<div class="chk'+(pr?" on":"")+'" onclick="tog(''+pe+'',''+ne+'')"></div>';
+        if(m==="cocina")h+='<div class="chk'+(pr?" on":"")+'" onclick="tog('+pe+','+ne+')"></div>';
         h+='<div class="info"><div class="nom'+(pr&&m==="cocina"?" proc":"")+'">'+item.n+'</div>';
         if(item.m>0)h+='<div class="mn'+(bajo?" bajo":"")+'">min:'+item.m+(bajo?" BAJO":"")+' </div>';
         h+='</div>';
         if(m==="administrador"&&tab==="ver"&&df!==null)h+='<span class="df '+(df>=0?"up":"dn")+'">'+(df>=0?"+":"")+df.toFixed(1)+'</span>';
         if(m==="administrador"&&tab==="editar"){
-          h+='<div class="ebs"><button class="be" onclick="opE(''+pe+'',''+ne+'','+item.m+')">Editar</button><button class="bd" onclick="delI(''+pe+'',''+ne+'')">Eliminar</button></div>';
+          h+='<div class="ebs"><button class="be" onclick="opE('+pe+','+ne+','+item.m+')">Editar</button><button class="bd" onclick="delI('+pe+','+ne+')">Eliminar</button></div>';
         } else {
           h+='<input type="number" min="0" step="0.1" class="is'+(bajo?" bajo":"")+'" value="'+sk+'" placeholder="0" oninput="upS(''+pe+'',''+ne+'',this.value)"/>';
           if(m==="administrador"&&tab==="ver")h+='<input type="number" min="0" step="1" class="ip" placeholder="ped" value="'+ped+'" oninput="upP(''+pe+'',''+ne+'',this.value)"/>';
