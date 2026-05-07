@@ -114,7 +114,7 @@ function render(){
   var t=tot(),f=fil(),lw=low(),pct=t>0?Math.round(f/t*100):0;
   var m=S.mode,tab=S.tab;
   var h='<div class="header"><div class="header-top"><div><div style="font-size:17px;font-weight:600">Gratinata Pizza</div><div class="fecha">'+wl()+'</div></div><div class="save-msg">'+S.msg+'</div></div>';
-  h+='<div class="tabs"><button class="tab'+(m==="cocina"?" active":"")+'" onclick="setM('cocina')">Modo cocina</button><button class="tab'+(m==="administrador"?" active":"")+'" onclick="setM('administrador')">Modo administrador</button></div>';
+  h+='<div class="tabs"><button class="tab'+(m==="cocina"?" active":"")+'" onclick="setM(\'cocina\')">Modo cocina</button><button class="tab'+(m==="administrador"?" active":"")+'" onclick="setM(\'administrador\')">Modo administrador</button></div>';
   h+='<div class="progress-label"><span>Progreso</span><span>'+f+'/'+t+'</span></div><div class="progress-bar"><div class="progress-fill" style="width:'+pct+'%"></div></div></div>';
   if(m==="administrador"){
     h+='<div class="admin-panel"><div class="summary-grid"><div class="summary-card"><div class="label">Bajo minimo</div><div class="value '+(lw.length>0?"danger":"ok")+'">'+lw.length+'</div></div><div class="summary-card"><div class="label">Completado</div><div class="value">'+pct+'%</div></div></div>';
