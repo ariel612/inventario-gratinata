@@ -71,13 +71,11 @@ input[type=number].bajo{border-color:#ef4444}
 </style>
 </head>
 <body>
-
 <div id="app"><div class="loading">Cargando inventario...</div></div>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script>
-
 const firebaseConfig = {
   apiKey: "AIzaSyB9reUnHGDLL2PQeZ2fzU2MmDSZzcKi-as",
   authDomain: "inventario-gratinata.firebaseapp.com",
@@ -86,12 +84,11 @@ const firebaseConfig = {
   messagingSenderId: "191809403412",
   appId: "1:191809403412:web:d024e41463066bbdf58501"
 };
-
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
 const INVENTARIO_DEFAULT = [
-  { proveedor:"CAVELI", items:[
+  {proveedor:"CAVELI",items:[
     {nombre:"Alcohol caja 20 lt",min:1},{nombre:"Alusa",min:1},
     {nombre:"Queso cabra Holandia despunte kg",min:8},{nombre:"Mantequilla Kumet caja",min:1},
     {nombre:"Pieza jamón art. Victoria 2,5 kg",min:4},{nombre:"Cheddar laminado 2,7 kg",min:1},
@@ -101,7 +98,7 @@ const INVENTARIO_DEFAULT = [
     {nombre:"Toalla papel pqte 16",min:1},{nombre:"Lavaloza lt",min:2},
     {nombre:"Frambuesa kg",min:7},{nombre:"Mango kg",min:7},{nombre:"Piña kg",min:7},{nombre:"Frutillas kg",min:7}
   ]},
-  { proveedor:"BIDFOOD", items:[
+  {proveedor:"BIDFOOD",items:[
     {nombre:"Popcorn pollo kg",min:8},{nombre:"Pepinillo laminado kg",min:2},
     {nombre:"Mostaza Heinz kg",min:2},{nombre:"Tocino laminado ahumado kg",min:18},
     {nombre:"Mayonesa Kraft Real Mayo 3,7 kg",min:4},{nombre:"Sal kg",min:10},
@@ -109,19 +106,19 @@ const INVENTARIO_DEFAULT = [
     {nombre:"Traperos desechables",min:8},{nombre:"Papas Simplot 7mm caja 8 bolsas",min:32},
     {nombre:"Choclo 500 gr",min:5}
   ]},
-  { proveedor:"ICB", items:[
+  {proveedor:"ICB",items:[
     {nombre:"Pepperoni Sugardele caja 6 kg",min:1},{nombre:"Aceitunas 10 kg",min:1},
     {nombre:"Aros cebolla 6 uni",min:3},{nombre:"BBQ 10 kg",min:1},{nombre:"Sémola kg",min:12},
     {nombre:"Piña rodaja tarro 3 kg",min:1},{nombre:"Cereal Kellogs cj 8 uni",min:1},
     {nombre:"Guantes nitrilo M y S",min:2},{nombre:"Hamburguesa Angus 198gr cj 24 uni",min:5},
     {nombre:"Ajo en polvo kg",min:1}
   ]},
-  { proveedor:"GLOBEITALIA", items:[{nombre:"Tarro tomate Divella 4,05 kg",min:21}]},
-  { proveedor:"GAG", items:[{nombre:"Camarón 36/40 crudo c/cáscara kg",min:10}]},
-  { proveedor:"LEÑA", items:[{nombre:"Sacos",min:25}]},
-  { proveedor:"QUIYALLES", items:[{nombre:"Leche entera",min:24},{nombre:"Leche entera sin lactosa",min:12}]},
-  { proveedor:"ERICK PALTAS", items:[{nombre:"Paltas kg",min:20}]},
-  { proveedor:"OLIVO", items:[
+  {proveedor:"GLOBEITALIA",items:[{nombre:"Tarro tomate Divella 4,05 kg",min:21}]},
+  {proveedor:"GAG",items:[{nombre:"Camarón 36/40 crudo c/cáscara kg",min:10}]},
+  {proveedor:"LEÑA",items:[{nombre:"Sacos",min:25}]},
+  {proveedor:"QUIYALLES",items:[{nombre:"Leche entera",min:24},{nombre:"Leche entera sin lactosa",min:12}]},
+  {proveedor:"ERICK PALTAS",items:[{nombre:"Paltas kg",min:20}]},
+  {proveedor:"OLIVO",items:[
     {nombre:"Bombillas negras 25x200",min:0.1},{nombre:"Esponja lavaloza",min:4},
     {nombre:"Rollo bolsa prepicada 30*40 / 20*30 (c/u)",min:1},{nombre:"Paño pack 3",min:2},
     {nombre:"Rollo térmico 10 uni",min:0.5},{nombre:"Pqte servilletas negras 1200 uni",min:1},
@@ -130,7 +127,7 @@ const INVENTARIO_DEFAULT = [
     {nombre:"Bolsa basura 70*90 10 uni",min:5},{nombre:"Guante nitrilo M",min:1},
     {nombre:"Guante nitrilo S",min:1},{nombre:"Jabón 5 lt",min:1},{nombre:"Papel interfoleado 15 uni",min:1}
   ]},
-  { proveedor:"SUPERMERCADO", items:[
+  {proveedor:"SUPERMERCADO",items:[
     {nombre:"Bolsa basura chica baño",min:2},{nombre:"Cloro gel",min:2},
     {nombre:"Confort 9 uni x 50 mt",min:0},{nombre:"Huevos bandeja 30 uni",min:1},
     {nombre:"Levadura",min:1},{nombre:"Bolsas palillos hamburguesa",min:120},
@@ -140,32 +137,33 @@ const INVENTARIO_DEFAULT = [
     {nombre:"Mangas XL (chinos) 1 pqte",min:1},{nombre:"Bolsas vacío 25*35 (ML) 1 pqte",min:1},
     {nombre:"Marshmallow bolsa",min:2},{nombre:"Hielo 2,5",min:10}
   ]},
-  { proveedor:"TRES ARAUCO", items:[{nombre:"Mozzarella Molfino caja 6 uni",min:4}]},
-  { proveedor:"PUKARA", items:[{nombre:"Pan papa 12 cm sésamo blanco 36 uni",min:3}]}
+  {proveedor:"TRES ARAUCO",items:[{nombre:"Mozzarella Molfino caja 6 uni",min:4}]},
+  {proveedor:"PUKARA",items:[{nombre:"Pan papa 12 cm sésamo blanco 36 uni",min:3}]}
 ];
 
 const weekKey = () => { const d=new Date(),w=Math.ceil(d.getDate()/7); return `${d.getFullYear()}-${d.getMonth()+1}-w${w}`; };
 const prevWeekKey = () => { const d=new Date(); d.setDate(d.getDate()-7); const w=Math.ceil(d.getDate()/7); return `${d.getFullYear()}-${d.getMonth()+1}-w${w}`; };
 const bk = (p,n) => `${p}||${n}`;
 
-let state = { mode:"cocina", adminTab:"ver", stockData:{}, prevData:{}, catalogo:INVENTARIO_DEFAULT, saveMsg:"", editModal:null, newItem:{proveedor:"",nombre:"",min:""}, addProv:"" };
+let state = {mode:"cocina",adminTab:"ver",stockData:{},prevData:{},catalogo:INVENTARIO_DEFAULT,saveMsg:"",editModal:null,newItem:{proveedor:"",nombre:"",min:""},addProv:""};
 let saveTimeout = null;
 
 async function loadData() {
   try {
-    const [catSnap, stockSnap, prevSnap] = await Promise.all([
-      getDoc(doc(db,"gratinata","catalogo")),
-      getDoc(doc(db,"stock",weekKey())),
-      getDoc(doc(db,"stock",prevWeekKey()))
-    ]);
-    if (catSnap.exists()) state.catalogo = catSnap.data().items;
-    if (stockSnap.exists()) state.stockData = stockSnap.data().entries || {};
-    if (prevSnap.exists()) state.prevData = prevSnap.data().entries || {};
-  } catch(e) { console.error(e); }
+    const catSnap = await db.collection("gratinata").doc("catalogo").get();
+    if (catSnap.exists) state.catalogo = catSnap.data().items || INVENTARIO_DEFAULT;
+
+    const stockSnap = await db.collection("stock").doc(weekKey()).get();
+    if (stockSnap.exists) state.stockData = stockSnap.data().entries || {};
+
+    const prevSnap = await db.collection("stock").doc(prevWeekKey()).get();
+    if (prevSnap.exists) state.prevData = prevSnap.data().entries || {};
+  } catch(e) {
+    console.error("Error Firebase:", e);
+  }
   render();
-  // Live sync
-  onSnapshot(doc(db,"stock",weekKey()), snap => {
-    if (snap.exists()) { state.stockData = snap.data().entries || {}; render(); }
+  db.collection("stock").doc(weekKey()).onSnapshot(snap => {
+    if (snap.exists) { state.stockData = snap.data().entries || {}; render(); }
   });
 }
 
@@ -173,16 +171,15 @@ async function saveStock() {
   clearTimeout(saveTimeout);
   saveTimeout = setTimeout(async () => {
     try {
-      await db.collection("stock").doc(weekKey()).set({ entries: state.stockData, updatedAt: new Date().toISOString() });
-      state.saveMsg = "✓ Guardado";
-      render();
+      await db.collection("stock").doc(weekKey()).set({entries:state.stockData, updatedAt:new Date().toISOString()});
+      state.saveMsg = "✓ Guardado"; render();
       setTimeout(() => { state.saveMsg = ""; render(); }, 2000);
     } catch(e) { state.saveMsg = "Error al guardar"; render(); }
   }, 600);
 }
 
 async function saveCatalogo() {
-  await db.collection("gratinata").doc("catalogo").set({ items: state.catalogo });
+  await db.collection("gratinata").doc("catalogo").set({items:state.catalogo});
 }
 
 function getVal(p,n,f,fb="") { return state.stockData[bk(p,n)]?.[f] ?? fb; }
@@ -190,14 +187,11 @@ function getPrev(p,n) { return state.prevData[bk(p,n)]?.stock ?? null; }
 
 function updateStock(p,n,f,v) {
   const k=bk(p,n);
-  state.stockData = { ...state.stockData, [k]: { ...(state.stockData[k]||{}), [f]:v } };
-  state.saveMsg = "Guardando...";
-  render();
-  saveStock();
+  state.stockData = {...state.stockData,[k]:{...(state.stockData[k]||{}),[f]:v}};
+  state.saveMsg = "Guardando..."; render(); saveStock();
 }
 
 function weekLabel() { return new Date().toLocaleDateString("es-CL",{weekday:"long",day:"numeric",month:"long"}); }
-
 function totalItems() { return state.catalogo.reduce((a,g)=>a+g.items.length,0); }
 function filledItems() { return state.catalogo.reduce((a,g)=>a+g.items.filter(i=>getVal(g.proveedor,i.nombre,"stock")!=="").length,0); }
 function lowItems() {
@@ -226,14 +220,13 @@ function downloadTxt() {
 }
 
 function render() {
-  const t=totalItems(), f=filledItems(), low=lowItems();
-  const pct = t>0?Math.round((f/t)*100):0;
-  const {mode,adminTab,editModal,newItem,addProv} = state;
+  const t=totalItems(),f=filledItems(),low=lowItems();
+  const pct=t>0?Math.round((f/t)*100):0;
+  const {mode,adminTab,editModal,newItem,addProv}=state;
 
-  let html = `
-  <div class="header">
+  let html=`<div class="header">
     <div class="header-top">
-      <div><div class="header h1" style="font-size:17px;font-weight:600">Gratinata Pizza</div>
+      <div><div style="font-size:17px;font-weight:600">Gratinata Pizza</div>
       <div class="fecha">${weekLabel()}</div></div>
       <div class="save-msg">${state.saveMsg}</div>
     </div>
@@ -246,7 +239,7 @@ function render() {
   </div>`;
 
   if (mode==="administrador") {
-    html += `<div class="admin-panel">
+    html+=`<div class="admin-panel">
       <div class="summary-grid">
         <div class="summary-card"><div class="label">Bajo mínimo</div><div class="value ${low.length>0?"danger":"ok"}">${low.length}</div></div>
         <div class="summary-card"><div class="label">Completado</div><div class="value">${pct}%</div></div>
@@ -261,17 +254,16 @@ function render() {
       <button class="admin-tab ${adminTab==="editar"?"active":""}" onclick="setAdminTab('editar')">Editar/Eliminar</button>
       <button class="admin-tab ${adminTab==="agregar"?"active":""}" onclick="setAdminTab('agregar')">Agregar</button>
     </div>`;
-
     if (adminTab==="agregar") {
-      const provOpts = state.catalogo.map(g=>`<option value="${g.proveedor}">${g.proveedor}</option>`).join("");
+      const provOpts=state.catalogo.map(g=>`<option value="${g.proveedor}">${g.proveedor}</option>`).join("");
       html+=`<div class="add-form"><div class="form-title">Nuevo producto</div>
         <div class="field"><label>Proveedor</label>
           <select id="ni-prov" onchange="niChange('proveedor',this.value)">
             <option value="">— Seleccionar —</option>${provOpts}<option value="__nuevo__">+ Nuevo proveedor</option>
           </select></div>
-        ${newItem.proveedor==="__nuevo__"?`<div class="field"><label>Nombre del nuevo proveedor</label><input id="ni-addprov" value="${addProv}" oninput="setAddProv(this.value)" placeholder="PROVEEDOR"/></div>`:""}
-        <div class="field"><label>Nombre del producto</label><input id="ni-nom" value="${newItem.nombre}" oninput="niChange('nombre',this.value)" placeholder="Ej: Orégano kg"/></div>
-        <div class="field"><label>Mínimo requerido</label><input type="number" min="0" step="0.5" id="ni-min" value="${newItem.min}" oninput="niChange('min',this.value)" placeholder="0"/></div>
+        ${newItem.proveedor==="__nuevo__"?`<div class="field"><label>Nombre nuevo proveedor</label><input value="${addProv}" oninput="setAddProv(this.value)" placeholder="PROVEEDOR"/></div>`:""}
+        <div class="field"><label>Nombre del producto</label><input value="${newItem.nombre}" oninput="niChange('nombre',this.value)" placeholder="Ej: Orégano kg"/></div>
+        <div class="field"><label>Mínimo requerido</label><input type="number" min="0" step="0.5" value="${newItem.min}" oninput="niChange('min',this.value)" placeholder="0"/></div>
         <button class="btn btn-primary" onclick="addItem()">+ Agregar producto</button>
       </div>`;
     }
@@ -283,81 +275,53 @@ function render() {
     state.catalogo.forEach(g=>{
       html+=`<div class="proveedor-label">${g.proveedor}</div>`;
       g.items.forEach(item=>{
-        const p=g.proveedor, stock=getVal(p,item.nombre,"stock","");
+        const p=g.proveedor,stock=getVal(p,item.nombre,"stock","");
         const procesado=getVal(p,item.nombre,"procesado",false);
         const prev=getPrev(p,item.nombre);
         const sn=parseFloat(stock);
         const bajo=!isNaN(sn)&&item.min>0&&sn<item.min;
         const diff=(prev!==null&&stock!=="")?(sn-parseFloat(prev)):null;
-        const pe=encodeURIComponent(p), ne=encodeURIComponent(item.nombre);
-
+        const pe=encodeURIComponent(p),ne=encodeURIComponent(item.nombre);
         html+=`<div class="item-row">`;
-        if (mode==="cocina") {
-          html+=`<div class="checkbox ${procesado?"checked":""}" onclick="toggleProc('${pe}','${ne}')"></div>`;
-        }
+        if (mode==="cocina") html+=`<div class="checkbox ${procesado?"checked":""}" onclick="toggleProc('${pe}','${ne}')"></div>`;
         html+=`<div class="item-info">
           <div class="item-nombre ${procesado&&mode==="cocina"?"procesado":""}">${item.nombre}</div>
           ${item.min>0?`<div class="item-min ${bajo?"bajo"}">mín: ${item.min}${bajo?" ⚠ bajo mínimo":""}</div>`:""}
         </div>`;
-        if (mode==="administrador"&&adminTab==="ver"&&diff!==null) {
+        if (mode==="administrador"&&adminTab==="ver"&&diff!==null)
           html+=`<span class="diff ${diff>=0?"up":"down"}">${diff>=0?"+":""}${diff.toFixed(1)}</span>`;
-        }
-        if (mode==="administrador"&&adminTab==="editar") {
-          html+=`<div class="edit-btns">
-            <button class="btn-edit" onclick="openEdit('${pe}','${ne}',${item.min})">Editar</button>
-            <button class="btn-del" onclick="delItem('${pe}','${ne}')">Eliminar</button>
-          </div>`;
-        } else {
-          html+=`<input type="number" min="0" step="0.1" class="${bajo?"bajo":""}" value="${stock}" placeholder="0"
-            oninput="updateStk('${pe}','${ne}',this.value)"/>`;
-        }
+        if (mode==="administrador"&&adminTab==="editar")
+          html+=`<div class="edit-btns"><button class="btn-edit" onclick="openEdit('${pe}','${ne}',${item.min})">Editar</button><button class="btn-del" onclick="delItem('${pe}','${ne}')">Eliminar</button></div>`;
+        else
+          html+=`<input type="number" min="0" step="0.1" class="${bajo?"bajo":""}" value="${stock}" placeholder="0" oninput="updateStk('${pe}','${ne}',this.value)"/>`;
         html+=`</div>`;
       });
     });
     html+=`</div>`;
   }
 
-  // Footer
-  if (mode==="cocina") {
-    html+=`<div class="footer"><div class="footer-inner">
-      <div class="footer-count">${f}/${t} completados</div>
-      <button class="btn btn-secondary" style="width:auto;padding:8px 14px" onclick="markAll()">Marcar todos procesados</button>
-    </div></div>`;
-  }
-  if (mode==="administrador"&&adminTab==="ver") {
-    html+=`<div class="footer"><div class="footer-inner">
-      <button class="btn btn-secondary" onclick="download()">⬇ Descargar inventario (.txt)</button>
-    </div></div>`;
-  }
+  if (mode==="cocina") html+=`<div class="footer"><div class="footer-inner"><div class="footer-count">${f}/${t} completados</div><button class="btn btn-secondary" style="width:auto;padding:8px 14px" onclick="markAll()">Marcar todos procesados</button></div></div>`;
+  if (mode==="administrador"&&adminTab==="ver") html+=`<div class="footer"><div class="footer-inner"><button class="btn btn-secondary" onclick="download()">⬇ Descargar inventario (.txt)</button></div></div>`;
 
-  // Edit modal
-  if (editModal) {
-    html+=`<div class="modal-overlay">
-      <div class="modal">
-        <div class="modal-title">Editar producto</div>
-        <div class="field"><label>Nombre</label><input id="em-nom" value="${editModal.nombre}" oninput="emChange('nombre',this.value)"/></div>
-        <div class="field"><label>Mínimo</label><input type="number" min="0" step="0.5" id="em-min" value="${editModal.min}" oninput="emChange('min',this.value)"/></div>
-        <div class="modal-btns">
-          <button class="btn btn-secondary" onclick="closeEdit()">Cancelar</button>
-          <button class="btn btn-primary" onclick="saveEdit()">Guardar</button>
-        </div>
-      </div>
-    </div>`;
-  }
+  if (editModal) html+=`<div class="modal-overlay"><div class="modal">
+    <div class="modal-title">Editar producto</div>
+    <div class="field"><label>Nombre</label><input value="${editModal.nombre}" oninput="emChange('nombre',this.value)"/></div>
+    <div class="field"><label>Mínimo</label><input type="number" min="0" step="0.5" value="${editModal.min}" oninput="emChange('min',this.value)"/></div>
+    <div class="modal-btns"><button class="btn btn-secondary" onclick="closeEdit()">Cancelar</button><button class="btn btn-primary" onclick="saveEdit()">Guardar</button></div>
+  </div></div>`;
 
-  document.getElementById("app").innerHTML = html;
+  document.getElementById("app").innerHTML=html;
 }
 
-// Global handlers
-window.setMode = v => { state.mode=v; state.adminTab="ver"; render(); };
-window.setAdminTab = v => { state.adminTab=v; render(); };
-window.updateStk = (pe,ne,v) => updateStock(decodeURIComponent(pe),decodeURIComponent(ne),"stock",v);
-window.toggleProc = (pe,ne) => { const p=decodeURIComponent(pe),n=decodeURIComponent(ne); updateStock(p,n,"procesado",!getVal(p,n,"procesado",false)); };
-window.markAll = () => { state.catalogo.forEach(g=>g.items.forEach(i=>updateStock(g.proveedor,i.nombre,"procesado",true))); };
-window.download = downloadTxt;
-window.niChange = (f,v) => { state.newItem={...state.newItem,[f]:v}; render(); };
-window.setAddProv = v => { state.addProv=v.toUpperCase(); render(); };
-window.addItem = async () => {
+window.setMode=v=>{state.mode=v;state.adminTab="ver";render();};
+window.setAdminTab=v=>{state.adminTab=v;render();};
+window.updateStk=(pe,ne,v)=>updateStock(decodeURIComponent(pe),decodeURIComponent(ne),"stock",v);
+window.toggleProc=(pe,ne)=>{const p=decodeURIComponent(pe),n=decodeURIComponent(ne);updateStock(p,n,"procesado",!getVal(p,n,"procesado",false));};
+window.markAll=()=>state.catalogo.forEach(g=>g.items.forEach(i=>updateStock(g.proveedor,i.nombre,"procesado",true)));
+window.download=downloadTxt;
+window.niChange=(f,v)=>{state.newItem={...state.newItem,[f]:v};render();};
+window.setAddProv=v=>{state.addProv=v.toUpperCase();render();};
+window.addItem=async()=>{
   const prov=(state.newItem.proveedor==="__nuevo__"?state.addProv:state.newItem.proveedor).toUpperCase();
   if (!prov||!state.newItem.nombre.trim()) return;
   const cat=[...state.catalogo];
@@ -365,21 +329,21 @@ window.addItem = async () => {
   const item={nombre:state.newItem.nombre.trim(),min:parseFloat(state.newItem.min)||0};
   if (idx>=0) cat[idx]={...cat[idx],items:[...cat[idx].items,item]};
   else cat.push({proveedor:prov,items:[item]});
-  state.catalogo=cat; state.newItem={proveedor:"",nombre:"",min:""}; state.addProv="";
-  await saveCatalogo(); render();
+  state.catalogo=cat;state.newItem={proveedor:"",nombre:"",min:""};state.addProv="";
+  await saveCatalogo();render();
 };
-window.delItem = async (pe,ne) => {
+window.delItem=async(pe,ne)=>{
   const p=decodeURIComponent(pe),n=decodeURIComponent(ne);
   state.catalogo=state.catalogo.map(g=>g.proveedor!==p?g:{...g,items:g.items.filter(i=>i.nombre!==n)}).filter(g=>g.items.length>0);
-  await saveCatalogo(); render();
+  await saveCatalogo();render();
 };
-window.openEdit = (pe,ne,min) => { state.editModal={proveedor:decodeURIComponent(pe),original:decodeURIComponent(ne),nombre:decodeURIComponent(ne),min}; render(); };
-window.closeEdit = () => { state.editModal=null; render(); };
-window.emChange = (f,v) => { state.editModal={...state.editModal,[f]:v}; };
-window.saveEdit = async () => {
-  const {proveedor,original,nombre,min}=state.editModal;
+window.openEdit=(pe,ne,min)=>{state.editModal={proveedor:decodeURIComponent(pe),original:decodeURIComponent(ne),nombre:decodeURIComponent(ne),min};render();};
+window.closeEdit=()=>{state.editModal=null;render();};
+window.emChange=(f,v)=>{state.editModal={...state.editModal,[f]:v};};
+window.saveEdit=async()=>{
+  const{proveedor,original,nombre,min}=state.editModal;
   state.catalogo=state.catalogo.map(g=>g.proveedor!==proveedor?g:{...g,items:g.items.map(i=>i.nombre===original?{nombre,min:parseFloat(min)||0}:i)});
-  state.editModal=null; await saveCatalogo(); render();
+  state.editModal=null;await saveCatalogo();render();
 };
 
 loadData();
