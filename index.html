@@ -149,7 +149,7 @@ function render(){
         if(m==="administrador"&&tab==="editar"){
           h+='<div class="ebs"><button class="be" data-action="edit" data-min="'+item.m+'">Editar</button><button class="bd" data-action="del">Eliminar</button></div>';
         } else {
-          h+='<input type="number" min="0" step="0.1" class="is'+(bajo?" bajo":"")+'" value="'+sk+'" placeholder="0" data-action="stock"/>';
+          h+='<input type="text" inputmode="decimal" class="is'+(bajo?" bajo":"")+'" value="'+sk+'" placeholder="0" data-action="stock"/>';
           if(m==="administrador"&&tab==="ver")h+='<input type="number" min="0" step="1" class="ip" value="'+ped+'" placeholder="ped" data-action="pedido"/>';
         }
         h+='</div>';
@@ -178,7 +178,7 @@ function bindEvents(){
     var tog=row.querySelector("[data-action=tog]");
     if(tog)tog.addEventListener("click",function(){upd(p,n,"procesado",!gv(p,n,"procesado",false));});
     var sk=row.querySelector("[data-action=stock]");
-    if(sk)sk.addEventListener("input",function(){upd(p,n,"stock",this.value);});
+    if(sk){sk.addEventListener("input",function(){upd(p,n,"stock",this.value.replace(",","."));});sk.addEventListener("keydown",function(e){if(e.key==="Enter"){e.preventDefault();var inputs=Array.from(document.querySelectorAll("[data-action=stock]"));var i=inputs.indexOf(this);if(i>=0&&i<inputs.length-1)inputs[i+1].focus();}});}
     var pd=row.querySelector("[data-action=pedido]");
     if(pd)pd.addEventListener("input",function(){upd(p,n,"pedido",this.value);});
     var ed=row.querySelector("[data-action=edit]");
