@@ -129,7 +129,7 @@ function wl(){return new Date().toLocaleDateString("es-CL",{weekday:"long",day:"
 function render(){
   var t=tot(),f=fil(),lw=low(),pct=t>0?Math.round(f/t*100):0;
   var m=S.mode,tab=S.tab;
-  var h='<div class="hdr"><div class="hdr-top"><div><div style="font-size:17px;font-weight:600">Gratinata Pizza</div><div class="fecha">'+wl()+'</div></div><div class="smsg">'+S.msg+'</div></div>';
+  var h='<div class="hdr"><div class="hdr-top"><div><div style="font-size:17px;font-weight:600">Gratinata Pizza</div><div class="fecha">'+wl()+'</div></div><div style="display:flex;align-items:center;gap:8px"><button class="dark-toggle" id="btn-dark">'+( document.body.classList.contains("dark")?"\u2600\uFE0F":"\uD83C\uDF19")+'</button><div class="smsg">'+S.msg+'</div></div></div>';
   h+='<div class="tabs">';
   h+='<button class="tab'+(m==="cocina"?" active":"")+'" data-m="cocina">Modo cocina</button>';
   h+='<button class="tab'+(m==="administrador"?" active":"")+'" data-m="administrador">Modo administrador</button>';
