@@ -192,7 +192,7 @@ function render(){
     h+='</div>';
   }
   if(m==="cocina")h+='<div class="ftr"><div class="ftri"><div class="ftrc">'+f+'/'+t+' completados</div><button class="btn btns" style="width:auto;padding:8px 14px" id="btn-all">Todos procesados</button><button class="btn btnr" style="width:auto;padding:8px 14px" id="btn-rst">Reset</button></div></div>';
-  if(m==="administrador"&&tab==="ver")h+='<div class="ftr"><div class="ftri"><button class="btn btns" style="flex:1;font-size:12px" id="btn-inv">Inventario</button><button class="btn btnp" style="flex:1;font-size:11px" id="btn-ped">Pedido</button><button class="btn" style="flex:1;font-size:11px;background:#25d366;color:#fff" id="btn-wa">WhatsApp</button><button class="btn btnr" style="flex:1;font-size:11px" id="btn-rst">Reset</button></div></div>';
+  if(m==="administrador"&&tab==="ver")h+='<div class="ftr"><div class="ftri"><button class="btn btns" style="flex:1;font-size:12px" id="btn-inv">Inventario</button><button class="btn btnp" style="flex:1;font-size:11px" id="btn-ped">Pedido</button><button class="btn" style="flex:1;font-size:11px;background:#25d366;color:#fff" id="btn-wa">WhatsApp</button><button class="btn" style="flex:1;font-size:11px;background:#6366f1;color:#fff" id="btn-hist">Historial</button><button class="btn btnr" style="flex:1;font-size:11px" id="btn-rst">Reset</button></div></div>';
   if(S.modal)h+='<div class="mo"><div class="md"><div class="mt">Editar producto</div><div class="fld"><label>Nombre</label><input id="em-n" value="'+S.modal.nombre+'"/></div><div class="fld"><label>Minimo</label><input type="number" id="em-m" min="0" step="0.5" value="'+S.modal.min+'"/></div><div class="mbs"><button class="btn btns" id="btn-ce">Cancelar</button><button class="btn btnp" id="btn-se">Guardar</button></div></div></div>';
   document.getElementById("app").innerHTML=h;
   bindEvents();
@@ -202,6 +202,8 @@ function bindEvents(){
   if(bd)bd.addEventListener("click",function(){document.body.classList.toggle("dark");render();});
   var bw=document.getElementById("btn-wa");
   if(bw)bw.addEventListener("click",dlWA);
+  var bh=document.getElementById("btn-hist");
+  if(bh)bh.addEventListener("click",verHistorial);
   // Tabs modo
   document.querySelectorAll("[data-m]").forEach(function(el){
     el.addEventListener("click",function(){S.mode=this.dataset.m;S.tab="ver";render();});
@@ -271,6 +273,49 @@ function dlInv(){
   var u=URL.createObjectURL(b),a=document.createElement("a");
   a.href=u;a.download="inventario_"+new Date().toISOString().slice(0,10)+".txt";a.click();URL.revokeObjectURL(u);
 }
+function savePedido(){
+  var items=[];
+  S.cat.forEach(function(g){
+    g.i.forEach(function(i){
+      var v=gv(g.p,i.n,"pedido","");
+      if(v!=="")items.push({p:g.p,n:i.n,c:v});
+    });
+  });
+  if(items.length===0)return;
+  var key="pedido_"+new Date().toISOString().slice(0,10)+"_"+Date.now();
+  var pedido={fecha:new Date().toLocaleDateString("es-CL"),items:items};
+  db.collection("pedidos").doc(key).set(pedido).then(function(){
+    limpiarPedidosAntiguos();
+  });
+}
+function limpiarPedidosAntiguos(){
+  var limite=new Date();
+  limite.setDate(limite.getDate()-14);
+  db.collection("pedidos").get().then(function(snap){
+    snap.forEach(function(doc){
+      var fecha=new Date(doc.id.split("_")[1]);
+      if(fecha<limite)db.collection("pedidos").doc(doc.id).delete();
+    });
+  });
+}
+function verHistorial(){
+  db.collection("pedidos").orderBy("__name__","desc").limit(10).get().then(function(snap){
+    if(snap.empty){alert("No hay pedidos guardados");return;}
+    var txt="=== HISTORIAL DE PEDIDOS ===\n\n";
+    snap.forEach(function(doc){
+      var d=doc.data();
+      txt+=d.fecha+"\n";
+      var provs={};
+      d.items.forEach(function(i){if(!provs[i.p])provs[i.p]=[];provs[i.p].push(i);});
+      Object.keys(provs).forEach(function(p){
+        txt+=p+"\n";
+        provs[p].forEach(function(i){txt+="  * "+i.c+" "+i.n+"\n";});
+      });
+      txt+="\n";
+    });
+    alert(txt);
+  });
+}
 function dlWA(){
   var lines=[];
   S.cat.forEach(function(g){
@@ -282,7 +327,7 @@ function dlWA(){
   });
   if(lines.length===0){alert("No hay pedidos ingresados");return;}
   var txt=encodeURIComponent(lines.join("\n"));
-  window.open("https://wa.me/56940624005?text="+txt,"_blank");
+  savePedido(); window.open("https://wa.me/56940624005?text="+txt,"_blank");
 }
 function dlPed(){
   var lines=[];
