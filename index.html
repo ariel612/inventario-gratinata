@@ -65,6 +65,22 @@ body{font-family:-apple-system,sans-serif;background:#f5f5f5;color:#1a1a1a;paddi
 .md{background:#fff;border-radius:16px;padding:20px;width:100%;max-width:380px}
 .mt{font-size:15px;font-weight:600;margin-bottom:14px}
 .mbs{display:flex;gap:8px;margin-top:12px}
+
+body.dark{background:#1a1a1a;color:#f0f0f0}
+body.dark .hdr{background:#2a2a2a;border-bottom-color:#444}
+body.dark .tab{background:#2a2a2a;border-color:#444;color:#aaa}
+body.dark .tab.active{background:#1d3a6e;border-color:#3b82f6;color:#93c5fd}
+body.dark .row{border-bottom-color:#333}
+body.dark .is{background:#2a2a2a;border-color:#444;color:#f0f0f0}
+body.dark .ip{background:#3a2a00;border-color:#f59e0b;color:#f0f0f0}
+body.dark .sc{background:#2a2a2a}
+body.dark .ab{background:#3a1a1a;border-color:#7f1d1d}
+body.dark .af{background:#2a2a2a;border-color:#444}
+body.dark .fld input,.dark .fld select{background:#333;border-color:#555;color:#f0f0f0}
+body.dark .btns{background:#2a2a2a;color:#ccc;border-color:#444}
+body.dark .md{background:#2a2a2a}
+body.dark .ftr{background:#2a2a2a;border-top-color:#444}
+.dark-toggle{cursor:pointer;font-size:20px;padding:2px 6px;border-radius:8px;border:none;background:transparent}
 </style>
 </head>
 <body>
@@ -167,6 +183,10 @@ function render(){
   bindEvents();
 }
 function bindEvents(){
+  var bd=document.getElementById("btn-dark");
+  if(bd)bd.addEventListener("click",function(){document.body.classList.toggle("dark");render();});
+  var bw=document.getElementById("btn-wa");
+  if(bw)bw.addEventListener("click",dlWA);
   // Tabs modo
   document.querySelectorAll("[data-m]").forEach(function(el){
     el.addEventListener("click",function(){S.mode=this.dataset.m;S.tab="ver";render();});
@@ -235,6 +255,19 @@ function dlInv(){
   var b=new Blob([lines.join("\n")],{type:"text/plain"});
   var u=URL.createObjectURL(b),a=document.createElement("a");
   a.href=u;a.download="inventario_"+new Date().toISOString().slice(0,10)+".txt";a.click();URL.revokeObjectURL(u);
+}
+function dlWA(){
+  var lines=[];
+  S.cat.forEach(function(g){
+    var its=g.i.filter(function(i){return gv(g.p,i.n,"pedido","")!=="";});
+    if(its.length===0)return;
+    lines.push("*"+g.p+"*");
+    its.forEach(function(i){lines.push("* "+gv(g.p,i.n,"pedido","")+" "+i.n);});
+    lines.push("");
+  });
+  if(lines.length===0){alert("No hay pedidos ingresados");return;}
+  var txt=encodeURIComponent(lines.join("\n"));
+  window.open("https://wa.me/56940624005?text="+txt,"_blank");
 }
 function dlPed(){
   var lines=[];
