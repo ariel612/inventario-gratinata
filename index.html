@@ -143,6 +143,16 @@ function fil(){return S.cat.reduce(function(a,g){return a+g.i.filter(function(i)
 function low(){return S.cat.reduce(function(a,g){return a.concat(g.i.filter(function(i){var s=parseFloat(gv(g.p,i.n,"stock",""));return !isNaN(s)&&i.m>0&&s<i.m;}).map(function(i){return {n:i.n,m:i.m,p:g.p};}));},[]); }
 function wl(){return new Date().toLocaleDateString("es-CL",{weekday:"long",day:"numeric",month:"long"});}
 function render(){
+  var focusedId=null, focusedVal=null, focusSel=null;
+  var active=document.activeElement;
+  if(active&&(active.tagName==="INPUT")&&active.dataset){
+    var row=active.closest(".row");
+    if(row){
+      focusedId=row.dataset.p+"||"+row.dataset.n+"||"+active.dataset.action;
+      focusedVal=active.value;
+      focusSel=[active.selectionStart,active.selectionEnd];
+    }
+  }
   var t=tot(),f=fil(),lw=low(),pct=t>0?Math.round(f/t*100):0;
   var m=S.mode,tab=S.tab;
   var h='<div class="hdr"><div class="hdr-top"><div><div style="font-size:17px;font-weight:600">Gratinata Pizza</div><div class="fecha">'+wl()+'</div></div><div style="display:flex;align-items:center;gap:8px"><button class="dark-toggle" id="btn-dark">'+( document.body.classList.contains("dark")?"\u2600\uFE0F":"\uD83C\uDF19")+'</button><div class="smsg">'+S.msg+'</div></div></div>';
@@ -197,6 +207,17 @@ function render(){
   if(S.modal)h+='<div class="mo"><div class="md"><div class="mt">Editar producto</div><div class="fld"><label>Nombre</label><input id="em-n" value="'+S.modal.nombre+'"/></div><div class="fld"><label>Minimo</label><input type="number" id="em-m" min="0" step="0.5" value="'+S.modal.min+'"/></div><div class="mbs"><button class="btn btns" id="btn-ce">Cancelar</button><button class="btn btnp" id="btn-se">Guardar</button></div></div></div>';
   document.getElementById("app").innerHTML=h;
   bindEvents();
+  if(focusedId){
+    var parts=focusedId.split("||");
+    var targetRow=document.querySelector('.row[data-p="'+parts[0]+'"][data-n="'+parts[1]+'"]');
+    if(targetRow){
+      var targetInput=targetRow.querySelector("[data-action="+parts[2]+"]");
+      if(targetInput){
+        targetInput.focus();
+        try{targetInput.setSelectionRange(focusSel[0],focusSel[1]);}catch(e){}
+      }
+    }
+  }
 }
 function bindEvents(){
   var bd=document.getElementById("btn-dark");
