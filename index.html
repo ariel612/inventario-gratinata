@@ -190,6 +190,15 @@ body.dark .prov-grp.done .prov{color:#7fc496}
 .prog-msg{font-family:'Fredoka',sans-serif;font-size:12px;color:var(--gold);letter-spacing:.01em}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 
+/* --- Pantalla de PIN --- */
+.lockwrap{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;padding:24px;background:var(--ink)}
+.lock-logo{height:56px;width:auto}
+.lock-card{background:var(--paper);border-radius:16px;padding:24px;width:100%;max-width:320px;border-top:4px solid var(--gold);text-align:center}
+.lock-lbl{font-family:'Fredoka',sans-serif;font-size:14px;color:var(--sub);margin-bottom:12px}
+.lock-inp{width:100%;text-align:center;font-size:26px;letter-spacing:.3em;padding:12px 0;border-radius:10px;border:1px solid var(--line);background:var(--cream);color:var(--text);font-family:'Inter';margin-bottom:12px}
+.lock-inp:focus{outline:none;border-color:var(--gold)}
+.lock-err{color:var(--danger);font-size:12.5px;margin-bottom:10px}
+
 /* Contado pero con faltantes: gana el aviso, no el "listo" */
 .prov-dot{width:7px;height:7px;border-radius:50%;background:var(--danger);flex-shrink:0;box-shadow:0 0 0 2px rgba(179,64,44,.22)}
 .prov-grp.done.haslow{background:var(--danger-soft);border:1px solid #e6c1b6}
@@ -221,7 +230,10 @@ var AREAS={
 var wk=function(){var d=new Date(),w=Math.ceil(d.getDate()/7);return d.getFullYear()+"-"+(d.getMonth()+1)+"-w"+w;};
 var pwk=function(){var d=new Date();d.setDate(d.getDate()-7);var w=Math.ceil(d.getDate()/7);return d.getFullYear()+"-"+(d.getMonth()+1)+"-w"+w;};
 var bk=function(p,n){return p+"||"+n;};
+var DEFAULT_PINS={cocina:"1111",recepcion:"2222",administrador:"9999"};
 var S={mode:"cocina",adminArea:"cocina",tab:"ver",msg:"",modal:null,ni:{p:"",n:"",m:""},ap:"",apWa:"",q:"",hist:null,waPick:null,
+  pins:Object.assign({},DEFAULT_PINS),
+  auth:{role:null,pinInput:"",err:""},
   areas:{
     cocina:{cat:INV_COCINA,sk:{},pv:{},exp:{}},
     recepcion:{cat:INV_RECEPCION,sk:{},pv:{},exp:{}}
@@ -229,8 +241,38 @@ var S={mode:"cocina",adminArea:"cocina",tab:"ver",msg:"",modal:null,ni:{p:"",n:"
 };
 function curArea(){return S.mode==="administrador"?S.adminArea:S.mode;}
 function AR(){return S.areas[curArea()];}
+function tryRestoreSession(){
+  try{
+    var raw=localStorage.getItem("gratinata_session");
+    if(!raw)return;
+    var sess=JSON.parse(raw);
+    if(sess&&sess.role&&sess.pin===S.pins[sess.role]){
+      S.auth.role=sess.role;
+      if(sess.role!=="administrador"){S.mode=sess.role;}
+    }
+  }catch(e){}
+}
+function loginWithPin(pin){
+  var role=Object.keys(S.pins).find(function(r){return S.pins[r]===pin;});
+  if(!role){S.auth.err="PIN incorrecto";return;}
+  S.auth.role=role;S.auth.err="";S.auth.pinInput="";
+  if(role!=="administrador")S.mode=role;
+  try{localStorage.setItem("gratinata_session",JSON.stringify({role:role,pin:pin}));}catch(e){}
+}
+function logout(){
+  S.auth.role=null;S.auth.pinInput="";S.auth.err="";
+  try{localStorage.removeItem("gratinata_session");}catch(e){}
+  render();
+}
 var st={};
 function load(){
+  db.collection("gratinata").doc("config").get().then(function(c){
+    if(c.exists&&c.data().pins){S.pins=Object.assign({},DEFAULT_PINS,c.data().pins);}
+    else{db.collection("gratinata").doc("config").set({pins:DEFAULT_PINS});}
+  }).catch(function(e){console.error("config",e);}).finally(function(){
+    tryRestoreSession();
+    render();
+  });
   Object.keys(AREAS).forEach(function(area){
     var cfg=AREAS[area], a=S.areas[area];
     db.collection("gratinata").doc(cfg.catDoc).get().then(function(c){if(c.exists)a.cat=c.data().items||cfg.seed;})
@@ -371,6 +413,22 @@ function bump(p,n,d,m){
   buzz(10);
 }
 function render(){
+  if(!S.auth.role){
+    var lh='<div class="lockwrap"><img class="lock-logo" src="./logo-header.png" alt="Gratinata Pizza" onerror="handleLogoError(this)"/>';
+    lh+='<div class="lock-card"><div class="lock-lbl">Ingresa tu PIN</div><input class="lock-inp" id="inp-pin" type="password" inputmode="numeric" maxlength="6" autofocus value="'+S.auth.pinInput+'"/>';
+    if(S.auth.err)lh+='<div class="lock-err">'+S.auth.err+'</div>';
+    lh+='<button class="btn btnp" id="btn-login">Entrar</button></div></div>';
+    document.getElementById("app").innerHTML=lh;
+    var pi=document.getElementById("inp-pin");
+    if(pi){
+      pi.focus();
+      pi.addEventListener("input",function(){S.auth.pinInput=this.value.replace(/[^0-9]/g,"");});
+      pi.addEventListener("keydown",function(e){if(e.key==="Enter"){loginWithPin(S.auth.pinInput);render();}});
+    }
+    var bl=document.getElementById("btn-login");
+    if(bl)bl.addEventListener("click",function(){loginWithPin(S.auth.pinInput);render();});
+    return;
+  }
   var focusedId=null, focusedVal=null, focusSel=null;
   var active=document.activeElement;
   var qFocused=(active&&active.id==="inp-q");
@@ -384,13 +442,17 @@ function render(){
     }
   }
   var t=tot(),f=fil(),lw=low(),pct=t>0?Math.round(f/t*100):0;
+  var isAdmin=S.auth.role==="administrador";
+  if(!isAdmin)S.mode=S.auth.role;
   var m=S.mode,tab=S.tab;
-  var h='<div class="hdr"><div class="hdr-top"><div><img class="brand-logo" src="./logo-header.png" alt="Gratinata Pizza" onerror="handleLogoError(this)"/><div class="fecha">'+wl()+'</div></div><div style="display:flex;align-items:center;gap:8px"><button class="dark-toggle" id="btn-dark">'+( document.body.classList.contains("dark")?"\u2600\uFE0F":"\uD83C\uDF19")+'</button><div class="smsg">'+S.msg+'</div></div></div>';
-  h+='<div class="tabs">';
-  h+='<button class="tab'+(m==="cocina"?" active":"")+'" data-m="cocina">Cocina</button>';
-  h+='<button class="tab'+(m==="recepcion"?" active":"")+'" data-m="recepcion">Recepcion</button>';
-  h+='<button class="tab'+(m==="administrador"?" active":"")+'" data-m="administrador">Admin</button>';
-  h+='</div>';
+  var h='<div class="hdr"><div class="hdr-top"><div><img class="brand-logo" src="./logo-header.png" alt="Gratinata Pizza" onerror="handleLogoError(this)"/><div class="fecha">'+wl()+'</div></div><div style="display:flex;align-items:center;gap:8px"><button class="dark-toggle" id="btn-dark">'+( document.body.classList.contains("dark")?"\u2600\uFE0F":"\uD83C\uDF19")+'</button><button class="dark-toggle" id="btn-logout" title="Salir">\u23FB</button><div class="smsg">'+S.msg+'</div></div></div>';
+  if(isAdmin){
+    h+='<div class="tabs">';
+    h+='<button class="tab'+(m==="cocina"?" active":"")+'" data-m="cocina">Cocina</button>';
+    h+='<button class="tab'+(m==="recepcion"?" active":"")+'" data-m="recepcion">Recepcion</button>';
+    h+='<button class="tab'+(m==="administrador"?" active":"")+'" data-m="administrador">Admin</button>';
+    h+='</div>';
+  }
   h+='<div class="pb-lbl"><span class="prog-msg">'+progMsg(pct)+'</span><span>'+f+'/'+t+'</span></div><div class="pb"><div class="pbf" style="width:'+pct+'%"></div></div></div>';
   if(m==="administrador"){
     h+='<div class="ap">';
@@ -405,6 +467,7 @@ function render(){
     h+='<button class="atb'+(tab==="ver"?" active":"")+'" data-t="ver">Ver</button>';
     h+='<button class="atb'+(tab==="editar"?" active":"")+'" data-t="editar">Editar</button>';
     h+='<button class="atb'+(tab==="agregar"?" active":"")+'" data-t="agregar">Agregar</button>';
+    h+='<button class="atb'+(tab==="seguridad"?" active":"")+'" data-t="seguridad">PINs</button>';
     h+='</div>';
     if(tab==="agregar"){
       h+='<div class="af"><div class="fld"><label>Proveedor</label><select id="sel-prov"><option value="">Seleccionar</option>'+AR().cat.map(function(g){return '<option value="'+g.p+'">'+g.p+'</option>';}).join('')+'<option value="__nuevo__">+ Nuevo</option></select></div>';
@@ -413,6 +476,12 @@ function render(){
         h+='<div class="fld"><label>WhatsApp del proveedor (opcional)</label><input type="tel" inputmode="numeric" id="inp-apwa" placeholder="56912345678" value="'+S.apWa+'"/></div>';
       }
       h+='<div class="fld"><label>Nombre producto</label><input id="inp-nn" value="'+S.ni.n+'"/></div><div class="fld"><label>Minimo</label><input type="number" id="inp-nm" min="0" step="0.5" value="'+S.ni.m+'"/></div><button class="btn btnp" id="btn-add">+ Agregar</button></div>';
+    }
+    if(tab==="seguridad"){
+      h+='<div class="af"><div class="fld"><label>PIN Cocina</label><input type="tel" inputmode="numeric" maxlength="6" id="pin-cocina" value="'+S.pins.cocina+'"/></div>';
+      h+='<div class="fld"><label>PIN Recepcion</label><input type="tel" inputmode="numeric" maxlength="6" id="pin-recepcion" value="'+S.pins.recepcion+'"/></div>';
+      h+='<div class="fld"><label>PIN Administrador</label><input type="tel" inputmode="numeric" maxlength="6" id="pin-administrador" value="'+S.pins.administrador+'"/></div>';
+      h+='<button class="btn btnp" id="btn-save-pins">Guardar PINs</button></div>';
     }
     h+='</div>';
   }
@@ -505,6 +574,8 @@ function render(){
 function bindEvents(){
   var bd=document.getElementById("btn-dark");
   if(bd)bd.addEventListener("click",function(){document.body.classList.toggle("dark");render();});
+  var blo=document.getElementById("btn-logout");
+  if(blo)blo.addEventListener("click",function(){if(confirm("¿Cerrar sesion?"))logout();});
   var bw=document.getElementById("btn-wa");
   if(bw)bw.addEventListener("click",dlWA);
   var bh=document.getElementById("btn-hist");
@@ -614,6 +685,19 @@ function bindEvents(){
   });
   var ce=document.getElementById("btn-ce");
   if(ce)ce.addEventListener("click",function(){S.modal=null;render();});
+  var bsp=document.getElementById("btn-save-pins");
+  if(bsp)bsp.addEventListener("click",function(){
+    var nc=document.getElementById("pin-cocina").value.trim();
+    var nr=document.getElementById("pin-recepcion").value.trim();
+    var na=document.getElementById("pin-administrador").value.trim();
+    if(!nc||!nr||!na){alert("Ningun PIN puede quedar vacio");return;}
+    var vals=[nc,nr,na];
+    if(new Set(vals).size!==3){alert("Los 3 PINs deben ser distintos entre si");return;}
+    S.pins={cocina:nc,recepcion:nr,administrador:na};
+    db.collection("gratinata").doc("config").set({pins:S.pins}).then(function(){
+      S.msg="PINs guardados";render();setTimeout(function(){S.msg="";render();},2000);
+    });
+  });
   var se=document.getElementById("btn-se");
   if(se)se.addEventListener("click",function(){
     var pr=S.modal.p,or=S.modal.o,nb=document.getElementById("em-n").value,mn=document.getElementById("em-m").value;
