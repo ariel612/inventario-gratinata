@@ -900,10 +900,14 @@ function finalizarTurno(){
 }
 function verCierreHistorial(){
   S.cierre.hist='<div style="text-align:center;color:#888;font-size:13px;padding:10px 0">Cargando...</div>';render();
-  db.collection("cierreHistorial").orderBy(firebase.firestore.FieldPath.documentId(),"desc").limit(10).get().then(function(snap){
+  db.collection("cierreHistorial").get().then(function(snap){
     if(snap.empty){S.cierre.hist='<div style="text-align:center;color:#888;font-size:13px;padding:10px 0">No hay checklists guardados</div>';render();return;}
+    var docs=[];
+    snap.forEach(function(doc){docs.push(doc);});
+    docs.sort(function(a,b){return a.id<b.id?1:(a.id>b.id?-1:0);});
+    docs=docs.slice(0,10);
     var out="";
-    snap.forEach(function(doc){
+    docs.forEach(function(doc){
       var d=doc.data();
       var done=Object.keys(d.tareas||{}).filter(function(k){return d.tareas[k];}).length;
       out+='<div style="margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px">'+esc(d.nombre)+'</div><div style="font-size:12px;color:var(--sub)">'+esc(d.fecha)+' &bull; '+done+' tareas completadas</div></div>';
@@ -937,10 +941,14 @@ function removeCierreTask(area,idx){
 function verHistorial(){
   S.hist='<div style="text-align:center;color:#888;font-size:13px;padding:10px 0">Cargando...</div>';render();
   var pedidosCol=AREAS[curArea()].pedidosCol;
-  db.collection(pedidosCol).orderBy(firebase.firestore.FieldPath.documentId(),"desc").limit(10).get().then(function(snap){
+  db.collection(pedidosCol).get().then(function(snap){
     if(snap.empty){S.hist='<div style="text-align:center;color:#888;font-size:13px;padding:10px 0">No hay pedidos guardados</div>';render();return;}
+    var docs=[];
+    snap.forEach(function(doc){docs.push(doc);});
+    docs.sort(function(a,b){return a.id<b.id?1:(a.id>b.id?-1:0);});
+    docs=docs.slice(0,10);
     var out="";
-    snap.forEach(function(doc){
+    docs.forEach(function(doc){
       var d=doc.data();
       out+='<div style="margin-bottom:14px"><div style="font-weight:600;font-size:13px;margin-bottom:6px">'+esc(d.fecha)+'</div>';
       var provs={};
