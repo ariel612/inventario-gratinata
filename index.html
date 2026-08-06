@@ -349,8 +349,9 @@ function load(){
     else db.collection("gratinata").doc("miseCatalog").set({items:MISE_SEED});
   }).catch(function(e){console.error("miseCatalog",e);}).finally(function(){render();});
   db.collection("miseDiario").doc(today()).onSnapshot(function(s){
+    if(escribiendo)return;
     if(s.exists)S.mise.dia=Object.assign({linea:{},repuesto:{},producir:{},sel:{},hecho:{}},s.data());
-    if(!escribiendo)render();
+    render();
   },function(e){console.error("miseDiario",e);});
 }
 function saveS(){
@@ -1079,13 +1080,20 @@ function saveMiseDia(){
     }).catch(function(e){S.msg="Error";render();});
   },500);
 }
+function marcarEscribiendoMise(){
+  escribiendo=true;
+  clearTimeout(escribiendoTimeout);
+  escribiendoTimeout=setTimeout(function(){escribiendo=false;render();},2500);
+}
 function updMiseField(name,field,val){
+  marcarEscribiendoMise();
   S.mise.dia=Object.assign({},S.mise.dia);
   S.mise.dia[field]=Object.assign({},S.mise.dia[field]);
   S.mise.dia[field][name]=val;
   saveMiseDia();
 }
 function toggleMiseSel(name){
+  marcarEscribiendoMise();
   S.mise.dia=Object.assign({},S.mise.dia,{sel:Object.assign({},S.mise.dia.sel),hecho:Object.assign({},S.mise.dia.hecho)});
   var nuevo=!S.mise.dia.sel[name];
   S.mise.dia.sel[name]=nuevo;
@@ -1094,6 +1102,7 @@ function toggleMiseSel(name){
 }
 function toggleMiseHecho(name){
   if(!S.mise.dia.sel[name])return;
+  marcarEscribiendoMise();
   S.mise.dia=Object.assign({},S.mise.dia,{hecho:Object.assign({},S.mise.dia.hecho)});
   S.mise.dia.hecho[name]=!S.mise.dia.hecho[name];
   buzz(10);
