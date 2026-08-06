@@ -238,20 +238,32 @@ var today=function(){var d=new Date();return d.getFullYear()+"-"+String(d.getMon
 var wk=function(){var d=new Date(),w=Math.ceil(d.getDate()/7);return d.getFullYear()+"-"+(d.getMonth()+1)+"-w"+w;};
 var pwk=function(){var d=new Date();d.setDate(d.getDate()-7);var w=Math.ceil(d.getDate()/7);return d.getFullYear()+"-"+(d.getMonth()+1)+"-w"+w;};
 var bk=function(p,n){return p+"||"+n;};
+var CIERRE_DEPTOS={
+  cocina:{label:"Cocina",areasDoc:"cierreAreas",turnosCol:"cierreTurnos",histCol:"cierreHistorial",seed:CIERRE_AREAS_SEED},
+  recepcion:{label:"Recepcion",areasDoc:"cierreAreasRecepcion",turnosCol:"cierreTurnosRecepcion",histCol:"cierreHistorialRecepcion",seed:[]}
+};
 var DEFAULT_PINS={cocina:"1111",recepcion:"2222",administrador:"9999"};
-var ROLE_MODES={cocina:["cocina","cierre"],recepcion:["recepcion"],administrador:["cocina","recepcion","cierre","administrador"]};
+var ROLE_MODES={cocina:["cocina","cierre"],recepcion:["recepcion","cierre"],administrador:["cocina","recepcion","cierre","administrador"]};
 var MODE_LABELS={cocina:"Cocina",recepcion:"Recepcion",cierre:"Cierre",administrador:"Admin"};
-var S={mode:"cocina",adminArea:"cocina",tab:"ver",msg:"",modal:null,ni:{p:"",n:"",m:""},ap:"",apWa:"",q:"",hist:null,waPick:null,
+var S={mode:"cocina",adminArea:"cocina",cierreDept:"cocina",tab:"ver",msg:"",modal:null,ni:{p:"",n:"",m:""},ap:"",apWa:"",q:"",hist:null,waPick:null,
   pins:Object.assign({},DEFAULT_PINS),
+  alertaWa:"",
   auth:{role:null,pinInput:"",err:""},
   areas:{
     cocina:{cat:INV_COCINA,sk:{},pv:{},exp:{}},
     recepcion:{cat:INV_RECEPCION,sk:{},pv:{},exp:{}}
   },
-  cierre:{areas:CIERRE_AREAS_SEED,turno:null,subtab:"checklist",hist:null,nombreInput:"",newAreaName:"",newTaskInput:{},exp:{}}
+  cierre:{subtab:"checklist",nombreInput:"",newAreaName:"",newTaskInput:{},incompletoAlert:null,
+    deptos:{
+      cocina:{areas:CIERRE_AREAS_SEED,turno:null,hist:null,exp:{}},
+      recepcion:{areas:[],turno:null,hist:null,exp:{}}
+    }
+  }
 };
 function curArea(){return S.mode==="administrador"?S.adminArea:S.mode;}
 function AR(){return S.areas[curArea()];}
+function CD(){return S.auth.role==="administrador"?S.cierreDept:S.auth.role;}
+function CR(){return S.cierre.deptos[CD()];}
 function tryRestoreSession(){
   try{
     var raw=localStorage.getItem("gratinata_session");
@@ -280,6 +292,7 @@ function load(){
   db.collection("gratinata").doc("config").get().then(function(c){
     if(c.exists&&c.data().pins){S.pins=Object.assign({},DEFAULT_PINS,c.data().pins);}
     else{db.collection("gratinata").doc("config").set({pins:DEFAULT_PINS});}
+    if(c.exists&&c.data().alertaWa)S.alertaWa=c.data().alertaWa;
   }).catch(function(e){console.error("config",e);}).finally(function(){
     tryRestoreSession();
     render();
@@ -297,14 +310,17 @@ function load(){
       db.collection(cfg.stockCol).doc(wk()).onSnapshot(function(s){if(s.exists){a.sk=s.data().entries||{};if(!escribiendo)render();}});
     });
   });
-  db.collection("gratinata").doc("cierreAreas").get().then(function(c){
-    if(c.exists&&c.data().areas)S.cierre.areas=c.data().areas;
-    else db.collection("gratinata").doc("cierreAreas").set({areas:CIERRE_AREAS_SEED});
-  }).catch(function(e){console.error("cierreAreas",e);}).finally(function(){render();});
-  db.collection("cierreTurnos").doc(today()).onSnapshot(function(s){
-    S.cierre.turno=(s.exists&&!s.data().finalizado)?s.data():null;
-    if(!escribiendo)render();
-  },function(e){console.error("cierreTurnos",e);});
+  Object.keys(CIERRE_DEPTOS).forEach(function(dept){
+    var cfg=CIERRE_DEPTOS[dept], c=S.cierre.deptos[dept];
+    db.collection("gratinata").doc(cfg.areasDoc).get().then(function(doc){
+      if(doc.exists&&doc.data().areas)c.areas=doc.data().areas;
+      else db.collection("gratinata").doc(cfg.areasDoc).set({areas:cfg.seed});
+    }).catch(function(e){console.error(cfg.areasDoc,e);}).finally(function(){render();});
+    db.collection(cfg.turnosCol).doc(today()).onSnapshot(function(s){
+      c.turno=(s.exists&&!s.data().finalizado)?s.data():null;
+      if(!escribiendo)render();
+    },function(e){console.error(cfg.turnosCol,e);});
+  });
 }
 function saveS(){
   var area=curArea(), cfg=AREAS[area], a=AR();
@@ -503,25 +519,36 @@ function render(){
       h+='<div class="fld"><label>PIN Recepcion</label><input type="tel" inputmode="numeric" maxlength="6" id="pin-recepcion" value="'+S.pins.recepcion+'"/></div>';
       h+='<div class="fld"><label>PIN Administrador</label><input type="tel" inputmode="numeric" maxlength="6" id="pin-administrador" value="'+S.pins.administrador+'"/></div>';
       h+='<button class="btn btnp" id="btn-save-pins">Guardar PINs</button></div>';
+      h+='<div class="af" style="margin-top:10px"><div class="fld"><label>WhatsApp para avisos de cierre incompleto</label><input type="tel" inputmode="numeric" id="inp-alertawa" placeholder="56912345678" value="'+esc(S.alertaWa)+'"/></div><button class="btn btnp" id="btn-save-alertawa">Guardar</button></div>';
     }
     h+='</div>';
   }
   if(m==="cierre"){
+    if(isAdmin){
+      h+='<div class="atbs" style="margin:0 16px 10px;width:calc(100% - 32px)">';
+      Object.keys(CIERRE_DEPTOS).forEach(function(dept){
+        h+='<button class="atb'+(S.cierreDept===dept?" active":"")+'" data-cdept="'+dept+'">'+CIERRE_DEPTOS[dept].label+'</button>';
+      });
+      h+='</div>';
+    } else { S.cierreDept=S.auth.role; }
     h+='<div class="ap">';
     h+='<div class="atbs">';
     h+='<button class="atb'+(S.cierre.subtab==="checklist"?" active":"")+'" data-ctab="checklist">Checklist</button>';
     h+='<button class="atb'+(S.cierre.subtab==="historial"?" active":"")+'" data-ctab="historial">Historial</button>';
     h+='<button class="atb'+(S.cierre.subtab==="areas"?" active":"")+'" data-ctab="areas">Areas</button>';
     h+='</div>';
+    if(S.cierre.incompletoAlert){
+      h+='<div class="ab" style="display:flex;justify-content:space-between;align-items:center;gap:10px"><div style="font-size:12.5px;color:var(--danger)">El checklist quedo incompleto. ¿Avisar por WhatsApp?</div><div style="display:flex;gap:6px;flex-shrink:0"><button class="btn" style="width:auto;padding:6px 12px;margin:0;background:#25d366;color:#fff;font-size:12px" id="btn-cavisar">Avisar</button><button class="btn btns" style="width:auto;padding:6px 12px;margin:0;font-size:12px" id="btn-cavisar-no">No</button></div></div>';
+    }
     if(S.cierre.subtab==="checklist"){
-      if(!S.cierre.turno){
+      if(!CR().turno){
         h+='<div class="af"><div class="fld"><label>¿Quien realizara el checklist?</label><input id="inp-cnombre" placeholder="Nombre y apellido" value="'+esc(S.cierre.nombreInput)+'"/></div><button class="btn btnp" id="btn-cstart">Comenzar</button></div>';
       } else {
         var ct=cierreTot(),cf=cierreFil(),cpct=ct>0?Math.round(cf/ct*100):0;
-        h+='<div class="sc" style="margin-bottom:12px;display:flex;justify-content:space-between;align-items:center"><div><div class="lbl">'+esc(S.cierre.turno.nombre)+'</div><div style="font-size:11px;color:var(--sub)">'+esc(S.cierre.turno.fecha)+'</div></div><button class="btn btns" style="width:auto;padding:7px 12px;font-size:12px;margin:0" id="btn-ccancel">Cancelar checklist</button></div>';
-        S.cierre.areas.forEach(function(g){
-          var open=!!S.cierre.exp[g.n];
-          var done=g.t.filter(function(tk){return S.cierre.turno.tareas[g.n+"||"+tk];}).length;
+        h+='<div class="sc" style="margin-bottom:12px;display:flex;justify-content:space-between;align-items:center"><div><div class="lbl">'+esc(CR().turno.nombre)+'</div><div style="font-size:11px;color:var(--sub)">'+esc(CR().turno.fecha)+'</div></div><button class="btn btns" style="width:auto;padding:7px 12px;font-size:12px;margin:0" id="btn-ccancel">Cancelar checklist</button></div>';
+        CR().areas.forEach(function(g){
+          var open=!!CR().exp[g.n];
+          var done=g.t.filter(function(tk){return CR().turno.tareas[g.n+"||"+tk];}).length;
           var allDone=g.t.length>0&&done===g.t.length;
           var rpct=g.t.length?Math.round(done/g.t.length*100):0;
           h+='<div class="prov-grp'+(open?" open":"")+(allDone?" done":"")+'"><div class="prov" data-cprov="'+g.n+'"><span class="prov-name"><span>'+g.n+'</span></span><span class="prov-meta"><span class="prov-check">&#10003;</span><span class="prov-ct">'+done+'/'+g.t.length+'</span><span class="prov-chev'+(open?" open":"")+'">&#9656;</span></span></div><div class="prov-ring"><div class="prov-ring-f" style="width:'+rpct+'%"></div></div>';
@@ -529,7 +556,7 @@ function render(){
             h+='<div class="prov-items">';
             if(g.t.length===0)h+='<div style="padding:14px 8px;font-size:12.5px;color:var(--sub)">Esta area no tiene tareas configuradas. Agregalas en "Areas".</div>';
             g.t.forEach(function(tarea){
-              var on=!!S.cierre.turno.tareas[g.n+"||"+tarea];
+              var on=!!CR().turno.tareas[g.n+"||"+tarea];
               h+='<div class="row" data-carea="'+g.n+'" data-ctarea="'+esc(tarea)+'"><div class="chk'+(on?" on":"")+'" data-action="ctog"></div><div class="info"><div class="nom'+(on?" proc":"")+'">'+esc(tarea)+'</div></div></div>';
             });
             h+='</div>';
@@ -540,13 +567,13 @@ function render(){
       }
     }
     if(S.cierre.subtab==="historial"){
-      if(S.cierre.hist===null){verCierreHistorial();}
-      h+='<div class="af">'+(S.cierre.hist||'<div style="text-align:center;color:var(--sub);font-size:13px">Cargando...</div>')+'</div>';
+      if(CR().hist===null){verCierreHistorial();}
+      h+='<div class="af">'+(CR().hist||'<div style="text-align:center;color:var(--sub);font-size:13px">Cargando...</div>')+'</div>';
     }
     if(S.cierre.subtab==="areas"){
       h+='<div class="af"><div class="fld"><label>Nueva area o departamento</label><div style="display:flex;gap:8px"><input id="inp-careaname" placeholder="Ej: BODEGA" value="'+esc(S.cierre.newAreaName)+'" style="flex:1"/><button class="btn btnp" style="width:auto;padding:9px 16px;margin:0" id="btn-caddarea">+ Agregar</button></div></div></div>';
-      S.cierre.areas.forEach(function(g){
-        var open=!!S.cierre.exp["_admin_"+g.n];
+      CR().areas.forEach(function(g){
+        var open=!!CR().exp["_admin_"+g.n];
         h+='<div class="prov-grp'+(open?" open":"")+'" style="margin-top:8px"><div class="prov" data-cadminprov="'+g.n+'"><span class="prov-name"><span>'+g.n+'</span></span><span class="prov-meta"><span class="prov-ct">'+g.t.length+' tareas</span><span class="prov-chev'+(open?" open":"")+'">&#9656;</span></span></div>';
         if(open){
           h+='<div class="prov-items"><div style="padding:8px">';
@@ -554,7 +581,7 @@ function render(){
             h+='<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)"><span style="font-size:13px">'+esc(tarea)+'</span><button class="bd" data-caremovetask="'+idx+'" data-careaof="'+g.n+'">Eliminar</button></div>';
           });
           h+='<div style="display:flex;gap:6px;margin-top:8px"><input placeholder="Nueva tarea" value="'+esc(S.cierre.newTaskInput[g.n]||"")+'" data-ctaskinput="'+g.n+'" style="flex:1;padding:8px 10px;border-radius:8px;border:1px solid var(--line);font-size:13px"/><button class="btn btnp" style="width:auto;padding:8px 14px;margin:0;font-size:12px" data-caddtask="'+g.n+'">+ Tarea</button></div>';
-          h+='<button class="btn btnr" style="margin-top:10px" data-cremovearea="'+g.n+'">Eliminar area completa</button>';
+          h+='<div style="display:flex;gap:8px;margin-top:10px"><button class="btn btns" style="margin:0" data-crenamearea="'+g.n+'">Renombrar</button><button class="btn btnr" style="margin:0" data-cremovearea="'+g.n+'">Eliminar area</button></div>';
           h+='</div></div>';
         }
         h+='</div>';
@@ -684,8 +711,11 @@ function bindEvents(){
     el.addEventListener("blur",function(){saveCat();});
   });
   // ===== Cierre =====
+  document.querySelectorAll("[data-cdept]").forEach(function(el){
+    el.addEventListener("click",function(){S.cierreDept=this.dataset.cdept;render();});
+  });
   document.querySelectorAll("[data-ctab]").forEach(function(el){
-    el.addEventListener("click",function(){S.cierre.subtab=this.dataset.ctab;if(this.dataset.ctab==="historial")S.cierre.hist=null;render();});
+    el.addEventListener("click",function(){S.cierre.subtab=this.dataset.ctab;if(this.dataset.ctab==="historial")CR().hist=null;render();});
   });
   var icn=document.getElementById("inp-cnombre");
   if(icn)icn.addEventListener("input",function(){S.cierre.nombreInput=this.value;});
@@ -695,11 +725,15 @@ function bindEvents(){
   if(bcc)bcc.addEventListener("click",cancelTurno);
   var bcf=document.getElementById("btn-cfinish");
   if(bcf)bcf.addEventListener("click",finalizarTurno);
+  var bcav=document.getElementById("btn-cavisar");
+  if(bcav)bcav.addEventListener("click",avisarCierreIncompleto);
+  var bcavn=document.getElementById("btn-cavisar-no");
+  if(bcavn)bcavn.addEventListener("click",function(){S.cierre.incompletoAlert=null;render();});
   document.querySelectorAll("[data-cprov]").forEach(function(el){
-    el.addEventListener("click",function(){var n=this.dataset.cprov;S.cierre.exp[n]=!S.cierre.exp[n];render();});
+    el.addEventListener("click",function(){var n=this.dataset.cprov;CR().exp[n]=!CR().exp[n];render();});
   });
   document.querySelectorAll("[data-cadminprov]").forEach(function(el){
-    el.addEventListener("click",function(){var n="_admin_"+this.dataset.cadminprov;S.cierre.exp[n]=!S.cierre.exp[n];render();});
+    el.addEventListener("click",function(){var n="_admin_"+this.dataset.cadminprov;CR().exp[n]=!CR().exp[n];render();});
   });
   document.querySelectorAll(".row[data-carea] [data-action=ctog]").forEach(function(el){
     el.addEventListener("click",function(){
@@ -719,6 +753,9 @@ function bindEvents(){
   });
   document.querySelectorAll("[data-caremovetask]").forEach(function(el){
     el.addEventListener("click",function(){removeCierreTask(this.dataset.careaof,parseInt(this.dataset.caremovetask,10));});
+  });
+  document.querySelectorAll("[data-crenamearea]").forEach(function(el){
+    el.addEventListener("click",function(){renameCierreArea(this.dataset.crenamearea);});
   });
   document.querySelectorAll("[data-cremovearea]").forEach(function(el){
     el.addEventListener("click",function(){removeCierreArea(this.dataset.cremovearea);});
@@ -811,8 +848,15 @@ function bindEvents(){
     var vals=[nc,nr,na];
     if(new Set(vals).size!==3){alert("Los 3 PINs deben ser distintos entre si");return;}
     S.pins={cocina:nc,recepcion:nr,administrador:na};
-    db.collection("gratinata").doc("config").set({pins:S.pins}).then(function(){
+    db.collection("gratinata").doc("config").set({pins:S.pins},{merge:true}).then(function(){
       S.msg="PINs guardados";render();setTimeout(function(){S.msg="";render();},2000);
+    });
+  });
+  var bsaw=document.getElementById("btn-save-alertawa");
+  if(bsaw)bsaw.addEventListener("click",function(){
+    S.alertaWa=document.getElementById("inp-alertawa").value.replace(/[^0-9]/g,"");
+    db.collection("gratinata").doc("config").set({alertaWa:S.alertaWa},{merge:true}).then(function(){
+      S.msg="Guardado";render();setTimeout(function(){S.msg="";render();},2000);
     });
   });
   var se=document.getElementById("btn-se");
@@ -859,50 +903,76 @@ function limpiarPedidosAntiguos(){
   });
 }
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
-// ===== Cierre (checklist de cierre por area) =====
-function cierreTot(){return S.cierre.areas.reduce(function(a,g){return a+g.t.length;},0);}
-function cierreFil(){var t=S.cierre.turno;if(!t)return 0;return Object.keys(t.tareas||{}).filter(function(k){return t.tareas[k];}).length;}
-function saveCierreAreas(){db.collection("gratinata").doc("cierreAreas").set({areas:S.cierre.areas});}
+// ===== Cierre (checklist de cierre por area, por departamento) =====
+function cierreTot(){return CR().areas.reduce(function(a,g){return a+g.t.length;},0);}
+function cierreFil(){var t=CR().turno;if(!t)return 0;return Object.keys(t.tareas||{}).filter(function(k){return t.tareas[k];}).length;}
+function saveCierreAreas(){db.collection("gratinata").doc(CIERRE_DEPTOS[CD()].areasDoc).set({areas:CR().areas});}
 function startTurno(nombre){
   if(!nombre||!nombre.trim())return;
-  var snapshot=S.cierre.areas.map(function(g){return {n:g.n,t:g.t.slice()};});
+  var snapshot=CR().areas.map(function(g){return {n:g.n,t:g.t.slice()};});
   var turno={nombre:nombre.trim(),fecha:new Date().toLocaleDateString("es-CL"),tareas:{},finalizado:false,creadoEn:new Date().toISOString(),areasSnapshot:snapshot};
-  S.cierre.turno=turno;
-  db.collection("cierreTurnos").doc(today()).set(turno);
+  CR().turno=turno;
+  db.collection(CIERRE_DEPTOS[CD()].turnosCol).doc(today()).set(turno);
   render();
 }
 function cancelTurno(){
   if(!confirm("¿Cancelar este checklist? Se perdera todo el progreso marcado."))return;
-  S.cierre.turno=null;
-  db.collection("cierreTurnos").doc(today()).delete();
+  var dept=CD();
+  CR().turno=null;
+  db.collection(CIERRE_DEPTOS[dept].turnosCol).doc(today()).delete();
   render();
 }
 function toggleTareaCierre(area,tarea){
-  if(!S.cierre.turno)return;
+  if(!CR().turno)return;
+  var dept=CD();
   var k=area+"||"+tarea;
-  S.cierre.turno=Object.assign({},S.cierre.turno,{tareas:Object.assign({},S.cierre.turno.tareas)});
-  S.cierre.turno.tareas[k]=!S.cierre.turno.tareas[k];
+  CR().turno=Object.assign({},CR().turno,{tareas:Object.assign({},CR().turno.tareas)});
+  CR().turno.tareas[k]=!CR().turno.tareas[k];
   buzz(10);
-  db.collection("cierreTurnos").doc(today()).set(S.cierre.turno);
+  db.collection(CIERRE_DEPTOS[dept].turnosCol).doc(today()).set(CR().turno);
   render();
   if(cierreFil()===cierreTot()&&cierreTot()>0){buzz([20,80,20,80,20]);confetti();toast("¡Cierre completo!");}
 }
+function pendientesDeTurno(turno,areas){
+  var out=[];
+  (areas||[]).forEach(function(g){
+    var pend=g.t.filter(function(tk){return !(turno.tareas&&turno.tareas[g.n+"||"+tk]);});
+    if(pend.length>0)out.push({area:g.n,tareas:pend});
+  });
+  return out;
+}
 function finalizarTurno(){
-  if(!S.cierre.turno)return;
-  var t=Object.assign({},S.cierre.turno,{finalizado:true,finalizadoEn:new Date().toISOString()});
+  if(!CR().turno)return;
+  var dept=CD(),cfg=CIERRE_DEPTOS[dept];
+  var t=Object.assign({},CR().turno,{finalizado:true,finalizadoEn:new Date().toISOString()});
   var key="cierre_"+today()+"_"+Date.now();
-  db.collection("cierreHistorial").doc(key).set(t).then(function(){
-    db.collection("cierreTurnos").doc(today()).delete();
-    S.cierre.turno=null;S.msg="Checklist guardado";render();
+  var pend=pendientesDeTurno(t,t.areasSnapshot||CR().areas);
+  db.collection(cfg.histCol).doc(key).set(t).then(function(){
+    db.collection(cfg.turnosCol).doc(today()).delete();
+    CR().turno=null;S.msg="Checklist guardado";render();
     setTimeout(function(){S.msg="";render();},2000);
+    if(pend.length>0){
+      S.cierre.incompletoAlert={dept:dept,nombre:t.nombre,fecha:t.fecha,pend:pend};
+      render();
+    }
   }).catch(function(e){
     alert("No se pudo guardar el checklist: "+(e.message||e.code||e));
   });
 }
+function avisarCierreIncompleto(){
+  var al=S.cierre.incompletoAlert;
+  if(!al)return;
+  if(!S.alertaWa){alert("No hay un numero de WhatsApp configurado para alertas. Agregalo en Admin > PINs.");return;}
+  var lines=["*Cierre de "+CIERRE_DEPTOS[al.dept].label+" incompleto*","Responsable: "+al.nombre,"Fecha: "+al.fecha,""];
+  al.pend.forEach(function(p){lines.push("*"+p.area+"*: "+p.tareas.join(", "));});
+  window.open("https://wa.me/"+S.alertaWa+"?text="+encodeURIComponent(lines.join("\n")),"_blank");
+  S.cierre.incompletoAlert=null;render();
+}
 function verCierreHistorial(){
-  S.cierre.hist='<div style="text-align:center;color:#888;font-size:13px;padding:10px 0">Cargando...</div>';render();
-  db.collection("cierreHistorial").get().then(function(snap){
-    if(snap.empty){S.cierre.hist='<div style="text-align:center;color:#888;font-size:13px;padding:10px 0">No hay checklists guardados</div>';render();return;}
+  var dept=CD(),cfg=CIERRE_DEPTOS[dept];
+  CR().hist='<div style="text-align:center;color:#888;font-size:13px;padding:10px 0">Cargando...</div>';render();
+  db.collection(cfg.histCol).get().then(function(snap){
+    if(snap.empty){CR().hist='<div style="text-align:center;color:#888;font-size:13px;padding:10px 0">No hay checklists guardados</div>';render();return;}
     var docs=[];
     snap.forEach(function(doc){docs.push(doc);});
     docs.sort(function(a,b){return a.id<b.id?1:(a.id>b.id?-1:0);});
@@ -910,7 +980,7 @@ function verCierreHistorial(){
     var out="";
     docs.forEach(function(doc){
       var d=doc.data();
-      var areas=d.areasSnapshot||S.cierre.areas;
+      var areas=d.areasSnapshot||CR().areas;
       var totTareas=0,doneTareas=0,detalle="";
       areas.forEach(function(g){
         var doneG=g.t.filter(function(tk){return d.tareas&&d.tareas[g.n+"||"+tk];});
@@ -927,30 +997,39 @@ function verCierreHistorial(){
       out+=detalle;
       out+='</div>';
     });
-    S.cierre.hist=out;render();
-  }).catch(function(e){S.cierre.hist='<div style="text-align:center;color:var(--danger);font-size:12.5px;padding:10px 0">Error: '+esc(e.message||e.code||String(e))+'</div>';render();});
+    CR().hist=out;render();
+  }).catch(function(e){CR().hist='<div style="text-align:center;color:var(--danger);font-size:12.5px;padding:10px 0">Error: '+esc(e.message||e.code||String(e))+'</div>';render();});
 }
 function addCierreArea(nombre){
   if(!nombre||!nombre.trim())return;
   var n=nombre.trim().toUpperCase();
-  if(S.cierre.areas.some(function(g){return g.n===n;})){alert('El area "'+n+'" ya existe');return;}
-  S.cierre.areas=S.cierre.areas.concat([{n:n,t:[]}]);
+  if(CR().areas.some(function(g){return g.n===n;})){alert('El area "'+n+'" ya existe');return;}
+  CR().areas=CR().areas.concat([{n:n,t:[]}]);
   S.cierre.newAreaName="";
+  saveCierreAreas();render();
+}
+function renameCierreArea(nombre){
+  var nuevo=prompt('Nuevo nombre para "'+nombre+'"',nombre);
+  if(!nuevo||!nuevo.trim())return;
+  var n=nuevo.trim().toUpperCase();
+  if(n===nombre)return;
+  if(CR().areas.some(function(g){return g.n===n;})){alert('Ya existe un area llamada "'+n+'"');return;}
+  CR().areas=CR().areas.map(function(g){return g.n!==nombre?g:Object.assign({},g,{n:n});});
   saveCierreAreas();render();
 }
 function removeCierreArea(nombre){
   if(!confirm('¿Eliminar el area "'+nombre+'" y todas sus tareas?'))return;
-  S.cierre.areas=S.cierre.areas.filter(function(g){return g.n!==nombre;});
+  CR().areas=CR().areas.filter(function(g){return g.n!==nombre;});
   saveCierreAreas();render();
 }
 function addCierreTask(area,tarea){
   if(!tarea||!tarea.trim())return;
-  S.cierre.areas=S.cierre.areas.map(function(g){return g.n!==area?g:Object.assign({},g,{t:g.t.concat([tarea.trim()])});});
+  CR().areas=CR().areas.map(function(g){return g.n!==area?g:Object.assign({},g,{t:g.t.concat([tarea.trim()])});});
   S.cierre.newTaskInput[area]="";
   saveCierreAreas();render();
 }
 function removeCierreTask(area,idx){
-  S.cierre.areas=S.cierre.areas.map(function(g){return g.n!==area?g:Object.assign({},g,{t:g.t.filter(function(x,i){return i!==idx;})});});
+  CR().areas=CR().areas.map(function(g){return g.n!==area?g:Object.assign({},g,{t:g.t.filter(function(x,i){return i!==idx;})});});
   saveCierreAreas();render();
 }
 function verHistorial(){
