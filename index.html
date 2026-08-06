@@ -253,7 +253,7 @@ var S={mode:"cocina",adminArea:"cocina",cierreDept:"cocina",tab:"ver",msg:"",mod
     cocina:{cat:INV_COCINA,sk:{},pv:{},exp:{}},
     recepcion:{cat:INV_RECEPCION,sk:{},pv:{},exp:{}}
   },
-  cierre:{subtab:"checklist",nombreInput:"",newAreaName:"",newTaskInput:{},incompletoAlert:null,
+  cierre:{subtab:"checklist",nombreInput:"",newAreaName:"",newTaskInput:{},
     deptos:{
       cocina:{areas:CIERRE_AREAS_SEED,turno:null,hist:null,exp:{}},
       recepcion:{areas:[],turno:null,hist:null,exp:{}}
@@ -537,9 +537,6 @@ function render(){
     h+='<button class="atb'+(S.cierre.subtab==="historial"?" active":"")+'" data-ctab="historial">Historial</button>';
     h+='<button class="atb'+(S.cierre.subtab==="areas"?" active":"")+'" data-ctab="areas">Areas</button>';
     h+='</div>';
-    if(S.cierre.incompletoAlert){
-      h+='<div class="ab" style="display:flex;justify-content:space-between;align-items:center;gap:10px"><div style="font-size:12.5px;color:var(--danger)">El checklist quedo incompleto. ¿Avisar por WhatsApp?</div><div style="display:flex;gap:6px;flex-shrink:0"><button class="btn" style="width:auto;padding:6px 12px;margin:0;background:#25d366;color:#fff;font-size:12px" id="btn-cavisar">Avisar</button><button class="btn btns" style="width:auto;padding:6px 12px;margin:0;font-size:12px" id="btn-cavisar-no">No</button></div></div>';
-    }
     if(S.cierre.subtab==="checklist"){
       if(!CR().turno){
         h+='<div class="af"><div class="fld"><label>¿Quien realizara el checklist?</label><input id="inp-cnombre" placeholder="Nombre y apellido" value="'+esc(S.cierre.nombreInput)+'"/></div><button class="btn btnp" id="btn-cstart">Comenzar</button></div>';
@@ -725,10 +722,6 @@ function bindEvents(){
   if(bcc)bcc.addEventListener("click",cancelTurno);
   var bcf=document.getElementById("btn-cfinish");
   if(bcf)bcf.addEventListener("click",finalizarTurno);
-  var bcav=document.getElementById("btn-cavisar");
-  if(bcav)bcav.addEventListener("click",avisarCierreIncompleto);
-  var bcavn=document.getElementById("btn-cavisar-no");
-  if(bcavn)bcavn.addEventListener("click",function(){S.cierre.incompletoAlert=null;render();});
   document.querySelectorAll("[data-cprov]").forEach(function(el){
     el.addEventListener("click",function(){var n=this.dataset.cprov;CR().exp[n]=!CR().exp[n];render();});
   });
@@ -947,27 +940,27 @@ function finalizarTurno(){
   var t=Object.assign({},CR().turno,{finalizado:true,finalizadoEn:new Date().toISOString()});
   var key="cierre_"+today()+"_"+Date.now();
   var pend=pendientesDeTurno(t,t.areasSnapshot||CR().areas);
+  // Se envia de inmediato (dentro del mismo click) para que el navegador no bloquee la apertura de WhatsApp.
+  if(pend.length>0){
+    if(S.alertaWa){
+      var lines=["*Cierre de "+cfg.label+" incompleto*","Responsable: "+t.nombre,"Fecha: "+t.fecha,""];
+      pend.forEach(function(p){lines.push("*"+p.area+"*: "+p.tareas.join(", "));});
+      window.open("https://wa.me/"+S.alertaWa+"?text="+encodeURIComponent(lines.join("\n")),"_blank");
+    } else {
+      toast("Cierre incompleto (sin WhatsApp de alertas configurado)");
+    }
+  }
   db.collection(cfg.histCol).doc(key).set(t).then(function(){
     db.collection(cfg.turnosCol).doc(today()).delete();
-    CR().turno=null;S.msg="Checklist guardado";render();
-    setTimeout(function(){S.msg="";render();},2000);
-    if(pend.length>0){
-      S.cierre.incompletoAlert={dept:dept,nombre:t.nombre,fecha:t.fecha,pend:pend};
-      render();
-    }
+    CR().turno=null;
+    S.msg=(pend.length>0&&S.alertaWa)?"Guardado, aviso enviado":"Checklist guardado";
+    render();
+    setTimeout(function(){S.msg="";render();},2500);
   }).catch(function(e){
     alert("No se pudo guardar el checklist: "+(e.message||e.code||e));
   });
 }
-function avisarCierreIncompleto(){
-  var al=S.cierre.incompletoAlert;
-  if(!al)return;
-  if(!S.alertaWa){alert("No hay un numero de WhatsApp configurado para alertas. Agregalo en Admin > PINs.");return;}
-  var lines=["*Cierre de "+CIERRE_DEPTOS[al.dept].label+" incompleto*","Responsable: "+al.nombre,"Fecha: "+al.fecha,""];
-  al.pend.forEach(function(p){lines.push("*"+p.area+"*: "+p.tareas.join(", "));});
-  window.open("https://wa.me/"+S.alertaWa+"?text="+encodeURIComponent(lines.join("\n")),"_blank");
-  S.cierre.incompletoAlert=null;render();
-}
+
 function verCierreHistorial(){
   var dept=CD(),cfg=CIERRE_DEPTOS[dept];
   CR().hist='<div style="text-align:center;color:#888;font-size:13px;padding:10px 0">Cargando...</div>';render();
