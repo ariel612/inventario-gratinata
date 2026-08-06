@@ -216,6 +216,9 @@ body.dark .prov-grp.done.haslow .prov{color:#f0a794}
 <script>
 firebase.initializeApp({apiKey:"AIzaSyB9reUnHGDLL2PQeZ2fzU2MmDSZzcKi-as",authDomain:"inventario-gratinata.firebaseapp.com",projectId:"inventario-gratinata",storageBucket:"inventario-gratinata.firebasestorage.app",messagingSenderId:"191809403412",appId:"1:191809403412:web:d024e41463066bbdf58501"});
 var db=firebase.firestore();
+db.enablePersistence({synchronizeTabs:true}).catch(function(err){
+  console.warn("Persistencia offline no disponible:",err.code);
+});
 var INV_COCINA=[{p:"CAVELI",i:[{n:"Alcohol caja 20 lt",m:1},{n:"Alusa",m:1},{n:"Queso cabra Holandia despunte kg",m:8},{n:"Mantequilla Kumet caja",m:1},{n:"Pieza jamon art. Victoria 2,5 kg",m:4},{n:"Cheddar laminado 2,7 kg",m:1},{n:"Rueda parmesano",m:1},{n:"Rueda queso azul Santa Rosa",m:1},{n:"Salsa soya",m:1},{n:"Salsa cheddar Santa Rosa kg",m:5},{n:"Longaniza kg",m:3},{n:"Fondo alcachofa caja 10 uni",m:1},{n:"Toalla papel pqte 16",m:1},{n:"Lavaloza lt",m:2},{n:"Frambuesa kg",m:7},{n:"Mango kg",m:7},{n:"Pina kg",m:7},{n:"Frutillas kg",m:7}]},{p:"BIDFOOD",i:[{n:"Popcorn pollo kg",m:8},{n:"Pepinillo laminado kg",m:2},{n:"Mostaza Heinz kg",m:2},{n:"Tocino laminado ahumado kg",m:18},{n:"Mayonesa Kraft Real Mayo 3,7 kg",m:4},{n:"Sal kg",m:10},{n:"Aceite oliva Dido 5 lt",m:2},{n:"Mechada caja 8 kg",m:3},{n:"Traperos desechables",m:8},{n:"Papas Simplot 7mm caja 8 bolsas",m:32},{n:"Choclo 500 gr",m:5}]},{p:"ICB",i:[{n:"Pepperoni Sugardele caja 6 kg",m:1},{n:"Aceitunas 10 kg",m:1},{n:"Aros cebolla 6 uni",m:3},{n:"BBQ 10 kg",m:1},{n:"Semola kg",m:12},{n:"Pina rodaja tarro 3 kg",m:1},{n:"Cereal Kellogs cj 8 uni",m:1},{n:"Guantes nitrilo M y S",m:2},{n:"Hamburguesa Angus 198gr cj 24 uni",m:5},{n:"Ajo en polvo kg",m:1}]},{p:"GLOBEITALIA",i:[{n:"Tarro tomate Divella 4,05 kg",m:21}]},{p:"GAG",i:[{n:"Camaron 36/40 crudo c/cascara kg",m:10}]},{p:"LENA",i:[{n:"Sacos",m:25}]},{p:"QUIYALLES",i:[{n:"Leche entera",m:24},{n:"Leche entera sin lactosa",m:12}]},{p:"ERICK PALTAS",i:[{n:"Paltas kg",m:20}]},{p:"OLIVO",i:[{n:"Bombillas negras 25x200",m:0.1},{n:"Esponja lavaloza",m:4},{n:"Rollo bolsa prepicada 30x40",m:1},{n:"Pano pack 3",m:2},{n:"Rollo termico 10 uni",m:0.5},{n:"Pqte servilletas negras 1200 uni",m:1},{n:"Harina estampa pizza 20 kg",m:6},{n:"Virutilla gruesa olla",m:4},{n:"Aceite freir Frito Rico",m:3},{n:"Papas Simplot 7mm 8 uni x caja",m:4},{n:"Bolsa basura 70x90 10 uni",m:5},{n:"Guante nitrilo M",m:1},{n:"Guante nitrilo S",m:1},{n:"Jabon 5 lt",m:1},{n:"Papel interfoleado 15 uni",m:1}]},{p:"SUPERMERCADO",i:[{n:"Bolsa basura chica bano",m:2},{n:"Cloro gel",m:2},{n:"Confort 9 uni x 50 mt",m:0},{n:"Huevos bandeja 30 uni",m:1},{n:"Levadura",m:1},{n:"Bolsas palillos hamburguesa",m:120},{n:"Fosforos",m:1},{n:"Virutilla piso",m:2},{n:"Azucar kg",m:10},{n:"Nuez moscada",m:2},{n:"Paprika",m:1},{n:"Vinagre bidon 5 lts",m:1},{n:"Shitake bolsa estandar",m:2},{n:"Champinones 200 grs",m:15},{n:"Mangas XL chinos 1 pqte",m:1},{n:"Bolsas vacio 25x35 ML 1 pqte",m:1},{n:"Marshmallow bolsa",m:2},{n:"Hielo 2,5",m:10}]},{p:"TRES ARAUCO",i:[{n:"Mozzarella Molfino caja 6 uni",m:4}]},{p:"PUKARA",i:[{n:"Pan papa 12 cm sesamo blanco 36 uni",m:3}]}];
 var INV_RECEPCION=[
   {p:"PACKOUT",wa:"",i:[{n:"Caja pizza 32 cm negra",m:0},{n:"Caja multiuso negra autoarmable 20x14x6",m:0},{n:"Papel antigraso pizza 32 cm",m:0},{n:"Bowl kraft cuadrado 1400 cc",m:0},{n:"Envase Noodle 26 oz",m:0},{n:"Vaso cafe negro doble capa 12 oz",m:0},{n:"Tapa vaso negro cafe 12 oz",m:0},{n:"Caja kraft con ventana 1600 cc",m:0},{n:"Bolsa kraft negra 28x15x32",m:0}]},
@@ -480,7 +483,8 @@ function render(){
   if(!isAdmin&&(ROLE_MODES[S.auth.role]||[]).indexOf(S.mode)===-1)S.mode=S.auth.role;
   var m=S.mode,tab=S.tab;
   var t=(m==="cierre")?0:tot(),f=(m==="cierre")?0:fil(),lw=(m==="cierre")?[]:low(),pct=t>0?Math.round(f/t*100):0;
-  var h='<div class="hdr"><div class="hdr-top"><div><img class="brand-logo" src="./logo-header.png" alt="Gratinata Pizza" onerror="handleLogoError(this)"/><div class="fecha">'+wl()+'</div></div><div style="display:flex;align-items:center;gap:8px"><button class="dark-toggle" id="btn-dark">'+( document.body.classList.contains("dark")?"\u2600\uFE0F":"\uD83C\uDF19")+'</button><button class="dark-toggle" id="btn-logout" title="Salir">\u23FB</button><div class="smsg">'+S.msg+'</div></div></div>';
+  var h='<div class="hdr"><div class="hdr-top"><div><img class="brand-logo" src="./logo-header.png" alt="Gratinata Pizza" onerror="handleLogoError(this)"/><div class="fecha">'+wl()+'</div></div><div style="display:flex;align-items:center;gap:8px"><button class="dark-toggle" id="btn-dark">'+( document.body.classList.contains("dark")?"\u2600\uFE0F":"\uD83C\uDF19")+'</button><button class="dark-toggle" id="btn-logout" title="Salir">\u23FB</button><div class="smsg">'+(navigator.onLine===false?'<span style="color:var(--warn)">&#9679; Sin wifi</span>':S.msg)+'</div></div></div>';
+  if(navigator.onLine===false)h+='<div style="background:var(--warn-soft);color:var(--warn);font-size:11.5px;text-align:center;padding:5px 8px">Sin conexion: tus cambios se guardan en el celular y se suben solos cuando vuelva el wifi</div>';
   var myModes=ROLE_MODES[S.auth.role]||[];
   if(myModes.length>1){
     h+='<div class="tabs">';
@@ -683,6 +687,9 @@ function bindEvents(){
   if(bh)bh.addEventListener("click",verHistorial);
   var bhc=document.getElementById("btn-hist-ce");
   if(bhc)bhc.addEventListener("click",function(){S.hist=null;render();});
+  document.querySelectorAll("[data-delhist-id]").forEach(function(el){
+    el.addEventListener("click",function(){deleteHistorialDoc(this.dataset.delhistCol,this.dataset.delhistId,this.dataset.delhistFn);});
+  });
   document.querySelectorAll("[data-wa-send]").forEach(function(el){
     el.addEventListener("click",function(){sendProvWA(S.waPick[parseInt(this.dataset.waSend,10)]);});
   });
@@ -986,7 +993,7 @@ function verCierreHistorial(){
       var badgeCls=pct===100?"var(--ok-soft)":"var(--warn-soft)";
       var badgeColor=pct===100?"var(--ok)":"var(--warn)";
       out+='<div style="margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--line)">';
-      out+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div><div style="font-weight:600;font-size:13.5px">'+esc(d.nombre)+'</div><div style="font-size:11.5px;color:var(--sub)">'+esc(d.fecha)+'</div></div><span style="background:'+badgeCls+';color:'+badgeColor+';font-weight:700;font-size:12px;padding:3px 9px;border-radius:99px">'+pct+'% ('+doneTareas+'/'+totTareas+')</span></div>';
+      out+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div><div style="font-weight:600;font-size:13.5px">'+esc(d.nombre)+'</div><div style="font-size:11.5px;color:var(--sub)">'+esc(d.fecha)+'</div></div><div style="display:flex;align-items:center;gap:6px;flex-shrink:0"><span style="background:'+badgeCls+';color:'+badgeColor+';font-weight:700;font-size:12px;padding:3px 9px;border-radius:99px">'+pct+'% ('+doneTareas+'/'+totTareas+')</span><button class="bd" data-delhist-col="'+cfg.histCol+'" data-delhist-id="'+doc.id+'" data-delhist-fn="cierre">Eliminar</button></div></div>';
       out+=detalle;
       out+='</div>';
     });
@@ -1037,7 +1044,7 @@ function verHistorial(){
     var out="";
     docs.forEach(function(doc){
       var d=doc.data();
-      out+='<div style="margin-bottom:14px"><div style="font-weight:600;font-size:13px;margin-bottom:6px">'+esc(d.fecha)+'</div>';
+      out+='<div style="margin-bottom:14px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div style="font-weight:600;font-size:13px">'+esc(d.fecha)+'</div><button class="bd" data-delhist-col="'+pedidosCol+'" data-delhist-id="'+doc.id+'" data-delhist-fn="pedidos">Eliminar</button></div>';
       var provs={};
       d.items.forEach(function(i){if(!provs[i.p])provs[i.p]=[];provs[i.p].push(i);});
       Object.keys(provs).forEach(function(p){
@@ -1048,6 +1055,13 @@ function verHistorial(){
     });
     S.hist=out;render();
   }).catch(function(e){S.hist='<div style="text-align:center;color:#dc2626;font-size:12.5px;padding:10px 0">Error: '+esc(e.message||e.code||String(e))+'</div>';render();});
+}
+function deleteHistorialDoc(col,id,tipo){
+  if(!confirm("¿Eliminar este registro del historial? No se puede deshacer."))return;
+  db.collection(col).doc(id).delete().then(function(){
+    if(tipo==="pedidos")verHistorial();
+    else verCierreHistorial();
+  }).catch(function(e){alert("No se pudo eliminar: "+(e.message||e.code||e));});
 }
 function sendProvWA(entry){
   var lines=["*"+entry.p+"*"];
@@ -1083,6 +1097,8 @@ function dlPed(){
   a.href=u;a.download="pedido_"+new Date().toISOString().slice(0,10)+".txt";a.click();URL.revokeObjectURL(u);
 }
 load();
+window.addEventListener("online",function(){buzz(10);render();});
+window.addEventListener("offline",function(){buzz([15,60,15]);render();});
 </script>
 </body>
 </html>
