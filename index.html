@@ -6,7 +6,7 @@
 <title>Gratinata - Inventario</title>
 <!-- PWA: instalable, pantalla completa, sin barra de navegador -->
 <link rel="manifest" href="./manifest.json"/>
-<meta name="theme-color" content="#3f3a30"/>
+<meta name="theme-color" content="#211d18"/>
 <meta name="mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
@@ -24,49 +24,51 @@ if("serviceWorker" in navigator){
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,wght@0,600;0,700;0,800;1,500&family=EB+Garamond:ital@1&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <style>
 :root{
-  --ink:#3f3a30;
-  --ink-2:#4d473a;
-  --gold:#c99a2e;
-  --gold-dk:#a87d1f;
-  --gold-soft:#f2e3bb;
-  --cream:#f1ead9;
-  --paper:#faf5e9;
-  --line:#e2d9c4;
-  --text:#3a3428;
-  --sub:#8a7f6c;
-  --ok:#3f7d4f;
-  --ok-soft:#e8f3ea;
-  --danger:#b3402c;
-  --danger-soft:#fbe9e4;
-  --warn:#b9822f;
-  --warn-soft:#faf0dd;
+  --ink:#211d18;
+  --ink-2:#322c25;
+  --accent:#a8402f;
+  --accent-soft:#f2e0da;
+  --cream:#f2eee3;
+  --paper:#fbf9f3;
+  --line:#e1dacb;
+  --text:#2b2620;
+  --sub:#8c8172;
+  --ok:#4f6b4f;
+  --ok-soft:#e7ede6;
+  --danger:#a8402f;
+  --danger-soft:#f2e0da;
+  --warn:#8f7233;
+  --warn-soft:#efe7d2;
+  --hdr-text:#f2eee3;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Inter',-apple-system,sans-serif;background:var(--cream);color:var(--text);padding-bottom:140px;-webkit-font-smoothing:antialiased}
-.hdr{background:var(--ink);padding:calc(16px + env(safe-area-inset-top)) 16px 12px;border-bottom:3px solid var(--gold);position:sticky;top:0;z-index:10}
+.hdr{background:var(--ink);padding:calc(16px + env(safe-area-inset-top)) 16px 12px;border-bottom:3px solid var(--accent);position:sticky;top:0;z-index:10}
 .hdr-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
-.brand-logo{height:34px;width:auto;display:block}
-.brand-fallback{font-family:'Fredoka',sans-serif;font-weight:600;font-size:19px;color:#fdf8ee}
-.fecha{font-size:11.5px;color:var(--gold-soft);text-transform:capitalize;letter-spacing:.02em;margin-top:2px}
-.smsg{font-size:11px;color:var(--gold);min-width:76px;text-align:right;letter-spacing:.02em}
+.brand{display:flex;align-items:center;gap:9px}
+.oven-icon{width:22px;height:16px;flex-shrink:0;color:var(--hdr-text)}
+.brand-title{font-family:'Bodoni Moda',serif;font-weight:800;font-size:20px;letter-spacing:.03em;color:var(--hdr-text);line-height:1}
+.brand-tag{font-family:'EB Garamond',serif;font-style:italic;font-size:11.5px;color:var(--hdr-text);opacity:.75;margin-top:1px}
+.fecha{font-size:11.5px;font-family:'EB Garamond',serif;font-style:italic;color:var(--hdr-text);text-transform:capitalize;letter-spacing:.02em;margin-top:2px;opacity:.85}
+.smsg{font-size:11px;color:var(--accent);min-width:76px;text-align:right;letter-spacing:.02em}
 .tabs{display:flex;gap:6px;margin-bottom:12px;background:var(--ink-2);border-radius:11px;padding:3px}
 .tab{flex:1;padding:8px 0;border-radius:9px;border:none;background:transparent;font-family:'Inter';font-size:13px;font-weight:500;cursor:pointer;color:#c9bfa9}
-.tab.active{background:var(--gold);color:var(--ink)}
+.tab.active{background:var(--ink);color:var(--hdr-text)}
 .pb-lbl{display:flex;justify-content:space-between;font-size:11px;color:#a89b7f;margin-bottom:5px;letter-spacing:.02em}
 .pb{height:4px;background:#3a3226;border-radius:99px}
-.pbf{height:4px;background:var(--gold);border-radius:99px;transition:width .3s}
+.pbf{height:4px;background:var(--accent);border-radius:99px;transition:width .3s}
 .sec{padding:12px 16px 4px;display:grid;grid-template-columns:1fr 1fr;gap:8px;align-content:start}
 .sb-wrap{padding:12px 16px 0}
 .sb{width:100%;padding:10px 13px;border-radius:10px;border:1px solid var(--line);font-size:14px;font-family:'Inter';background:var(--paper);color:var(--text)}
-.sb:focus{outline:none;border-color:var(--gold)}
+.sb:focus{outline:none;border-color:var(--accent)}
 body.dark .sb{background:#241f18;border-color:#3a3226;color:#f0e9da}
 .nores{padding:24px 0;text-align:center;color:var(--sub);font-size:13px;grid-column:1/-1}
 .prov-grp{border-radius:12px;overflow:hidden;background:var(--ink);align-self:start}
 .prov-grp.open{grid-column:1/-1;background:var(--paper);border:1px solid var(--line);box-shadow:0 1px 2px rgba(0,0,0,.04)}
-.prov{font-family:'Fredoka',sans-serif;font-size:12.5px;font-weight:600;color:#fbf6ea;text-transform:uppercase;letter-spacing:.05em;padding:11px 12px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;gap:6px}
+.prov{font-family:'Bodoni Moda',serif;font-size:12.5px;font-weight:600;color:#fbf6ea;text-transform:uppercase;letter-spacing:.05em;padding:11px 12px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;gap:6px}
 .prov-grp.open .prov{color:var(--ink);border-bottom:1px dashed var(--line)}
 .prov-name{display:flex;align-items:center;gap:6px;min-width:0;overflow:hidden}
 .prov-dot{width:6px;height:6px;border-radius:50%;background:var(--danger);flex-shrink:0}
@@ -88,7 +90,7 @@ body.dark .sb{background:#241f18;border-color:#3a3226;color:#f0e9da}
 .chk.on{border-color:var(--ok);background:var(--ok)}
 .chk.on::after{content:'¹3';font-size:12px;color:#fff;font-weight:700}
 .is{width:58px;text-align:center;font-size:14px;padding:6px 4px;border-radius:9px;border:1px solid var(--line);background:var(--paper);color:var(--text);font-family:'Inter'}
-.is:focus{outline:none;border-color:var(--gold)}
+.is:focus{outline:none;border-color:var(--accent)}
 .is.bajo{border-color:var(--danger);background:var(--danger-soft)}
 .ip{width:50px;text-align:center;font-size:14px;padding:6px 4px;border-radius:9px;border:1px solid var(--warn);background:var(--warn-soft);color:var(--text);font-family:'Inter'}
 .df{font-size:10.5px;flex-shrink:0;font-weight:600}
@@ -98,7 +100,7 @@ body.dark .sb{background:#241f18;border-color:#3a3226;color:#f0e9da}
 .sg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
 .sc{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:13px}
 .sc .lbl{font-size:11px;color:var(--sub);margin-bottom:4px;letter-spacing:.02em;text-transform:uppercase}
-.sc .val{font-family:'Fredoka',sans-serif;font-size:24px;font-weight:600}
+.sc .val{font-family:'Bodoni Moda',serif;font-size:24px;font-weight:600}
 .val.dng{color:var(--danger)}
 .val.ok{color:var(--ok)}
 .ab{background:var(--danger-soft);border:1px solid #e6c1b6;border-radius:12px;padding:11px 13px;margin-bottom:12px}
@@ -106,25 +108,25 @@ body.dark .sb{background:#241f18;border-color:#3a3226;color:#f0e9da}
 .ai{font-size:12.5px;color:#7a2c1c;padding:2px 0}
 .atbs{display:flex;gap:6px;margin-bottom:12px;background:var(--paper);border:1px solid var(--line);border-radius:11px;padding:3px}
 .atb{flex:1;padding:7px 0;font-size:12.5px;font-weight:500;border-radius:8px;cursor:pointer;border:none;background:transparent;color:var(--sub);font-family:'Inter'}
-.atb.active{background:var(--ink);color:var(--gold-soft);font-weight:600}
+.atb.active{background:var(--ink);color:var(--hdr-text);font-weight:600}
 .af{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:14px}
 .fld{margin-bottom:10px}
 .fld label{font-size:11px;color:var(--sub);display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:.02em}
 .fld input,.fld select{width:100%;padding:9px 11px;border-radius:9px;border:1px solid var(--line);font-size:14px;background:var(--paper);color:var(--text);font-family:'Inter'}
-.fld input:focus,.fld select:focus{outline:none;border-color:var(--gold)}
+.fld input:focus,.fld select:focus{outline:none;border-color:var(--accent)}
 .btn{width:100%;padding:11px 0;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;border:none;margin-top:4px;font-family:'Inter'}
-.btnp{background:var(--gold);color:var(--ink)}
+.btnp{background:var(--ink);color:var(--hdr-text)}
 .btns{background:var(--paper);color:var(--text);border:1px solid var(--line)}
 .btnr{background:var(--paper);color:var(--danger);border:1px solid #e6c1b6}
 .ebs{display:flex;gap:6px;flex-shrink:0}
 .be{font-size:12px;padding:6px 11px;border-radius:8px;border:1px solid var(--line);background:var(--paper);color:var(--text);cursor:pointer;font-family:'Inter';font-weight:500}
 .bd{font-size:12px;padding:6px 11px;border-radius:8px;border:1px solid #e6c1b6;background:var(--danger-soft);color:var(--danger);cursor:pointer;font-family:'Inter';font-weight:500}
-.ftr{position:fixed;bottom:0;left:0;right:0;padding:12px 16px calc(12px + env(safe-area-inset-bottom));background:var(--ink);border-top:2px solid var(--gold)}
+.ftr{position:fixed;bottom:0;left:0;right:0;padding:12px 16px calc(12px + env(safe-area-inset-bottom));background:var(--ink);border-top:2px solid var(--accent)}
 .ftri{max-width:480px;margin:0 auto;display:flex;gap:6px;align-items:center}
-.ftrc{flex:1;font-size:11.5px;color:var(--gold-soft)}
+.ftrc{flex:1;font-size:11.5px;color:var(--hdr-text);opacity:.85}
 .mo{position:fixed;inset:0;background:rgba(20,16,10,.55);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px}
-.md{background:var(--paper);border-radius:16px;padding:20px;width:100%;max-width:380px;border-top:4px solid var(--gold)}
-.mt{font-family:'Fredoka',sans-serif;font-size:16px;font-weight:600;margin-bottom:14px}
+.md{background:var(--paper);border-radius:16px;padding:20px;width:100%;max-width:380px;border-top:4px solid var(--accent)}
+.mt{font-family:'Bodoni Moda',serif;font-size:16px;font-weight:600;margin-bottom:14px}
 .mbs{display:flex;gap:8px;margin-top:12px}
 
 body.dark{--cream:#26221c;--paper:#332e25;--line:#4a4336;--text:#ece3d3;--sub:#b3a891;background:var(--cream);color:var(--text)}
@@ -145,12 +147,12 @@ body.dark .nom.proc{color:#7d7263}
 body.dark .atbs{background:var(--paper);border-color:var(--line)}
 body.dark .be{background:#2a241c;border-color:var(--line);color:var(--text)}
 body.dark .chk{background:#2a241c;border-color:#4a4234}
-.dark-toggle{cursor:pointer;font-size:18px;padding:4px 7px;border-radius:8px;border:none;background:rgba(255,255,255,.08);color:var(--gold-soft)}
+.dark-toggle{cursor:pointer;font-size:18px;padding:4px 7px;border-radius:8px;border:none;background:rgba(255,255,255,.08);color:var(--hdr-text)}
 
 /* --- Steppers de conteo rapido --- */
 .stp{display:flex;align-items:center;gap:4px;flex-shrink:0}
 .stp-b{width:34px;height:34px;border-radius:9px;border:1px solid var(--line);background:var(--paper);color:var(--text);font-size:16px;font-weight:600;font-family:'Inter';cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;-webkit-tap-highlight-color:transparent;transition:transform .08s}
-.stp-b:active{transform:scale(.9);background:var(--gold-soft);border-color:var(--gold)}
+.stp-b:active{transform:scale(.9);background:var(--accent-soft);border-color:var(--accent)}
 .stp-b.wide{width:40px;font-size:12px}
 body.dark .stp-b{background:#2a241c;border-color:var(--line);color:var(--text)}
 
@@ -162,7 +164,7 @@ body.dark .row.low{background:#3a1d16}
 /* --- Chip de proveedor: anillo, alerta, completado --- */
 .prov-ring{height:3px;background:rgba(255,255,255,.16);border-radius:99px;margin:0 12px 9px}
 .prov-grp.open .prov-ring{background:var(--line);margin-bottom:0}
-.prov-ring-f{height:3px;background:var(--gold);border-radius:99px;transition:width .25s}
+.prov-ring-f{height:3px;background:var(--accent);border-radius:99px;transition:width .25s}
 .prov-dot{display:none}
 .prov-grp.haslow .prov-dot{display:block}
 .prov-check{display:none;color:var(--ok);font-weight:700}
@@ -175,7 +177,7 @@ body.dark .prov-grp.done{background:#1d3024;border-color:#2f4a37}
 body.dark .prov-grp.done .prov{color:#7fc496}
 
 /* --- Aviso de logro --- */
-.toast{position:fixed;left:50%;bottom:104px;transform:translateX(-50%);background:var(--ink);color:var(--gold-soft);font-family:'Fredoka',sans-serif;font-size:14px;font-weight:600;padding:11px 20px;border-radius:99px;z-index:200;border:1px solid var(--gold);animation:pop .3s ease;white-space:nowrap;box-shadow:0 4px 14px rgba(0,0,0,.2)}
+.toast{position:fixed;left:50%;bottom:104px;transform:translateX(-50%);background:var(--ink);color:var(--hdr-text);font-family:'Bodoni Moda',serif;font-size:14px;font-weight:600;padding:11px 20px;border-radius:99px;z-index:200;border:1px solid var(--accent);animation:pop .3s ease;white-space:nowrap;box-shadow:0 4px 14px rgba(0,0,0,.2)}
 @keyframes pop{0%{opacity:0;transform:translateX(-50%) translateY(10px) scale(.9)}100%{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}}
 .toast.out{opacity:0;transition:opacity .3s}
 
@@ -185,18 +187,18 @@ body.dark .prov-grp.done .prov{color:#7fc496}
 @keyframes fall{0%{transform:translateY(-20px) rotate(0);opacity:1}100%{transform:translateY(105vh) rotate(600deg);opacity:.9}}
 
 /* --- Boton siguiente pendiente --- */
-.fab{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;padding:12px 0;border-radius:11px;border:none;background:var(--gold);color:var(--ink);font-family:'Inter';font-size:13.5px;font-weight:700;cursor:pointer;letter-spacing:.01em}
+.fab{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;padding:12px 0;border-radius:11px;border:none;background:var(--ink);color:var(--hdr-text);font-family:'Inter';font-size:13.5px;font-weight:700;cursor:pointer;letter-spacing:.01em}
 .fab.done{background:var(--ok);color:#fff}
-.prog-msg{font-family:'Fredoka',sans-serif;font-size:12px;color:var(--gold);letter-spacing:.01em}
+.prog-msg{font-family:'Bodoni Moda',serif;font-style:italic;font-size:12px;color:var(--accent);letter-spacing:.01em}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 
 /* --- Pantalla de PIN --- */
 .lockwrap{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;padding:24px;background:var(--ink)}
-.lock-logo{height:56px;width:auto}
-.lock-card{background:var(--paper);border-radius:16px;padding:24px;width:100%;max-width:320px;border-top:4px solid var(--gold);text-align:center}
-.lock-lbl{font-family:'Fredoka',sans-serif;font-size:14px;color:var(--sub);margin-bottom:12px}
+.lock-logo{width:60px;height:44px;color:var(--hdr-text);margin-bottom:2px}
+.lock-card{background:var(--paper);border-radius:16px;padding:24px;width:100%;max-width:320px;border-top:4px solid var(--accent);text-align:center}
+.lock-lbl{font-family:'Bodoni Moda',serif;font-size:14px;color:var(--sub);margin-bottom:12px}
 .lock-inp{width:100%;text-align:center;font-size:26px;letter-spacing:.3em;padding:12px 0;border-radius:10px;border:1px solid var(--line);background:var(--cream);color:var(--text);font-family:'Inter';margin-bottom:12px}
-.lock-inp:focus{outline:none;border-color:var(--gold)}
+.lock-inp:focus{outline:none;border-color:var(--accent)}
 .lock-err{color:var(--danger);font-size:12.5px;margin-bottom:10px}
 
 /* Contado pero con faltantes: gana el aviso, no el "listo" */
@@ -366,12 +368,7 @@ function tot(){return AR().cat.reduce(function(a,g){return a+g.i.length;},0);}
 function fil(){return AR().cat.reduce(function(a,g){return a+g.i.filter(function(i){return gv(g.p,i.n,"stock")!=="";}).length;},0);}
 function low(){return AR().cat.reduce(function(a,g){return a.concat(g.i.filter(function(i){var s=parseFloat(gv(g.p,i.n,"stock",""));return !isNaN(s)&&i.m>0&&s<i.m;}).map(function(i){return {n:i.n,m:i.m,p:g.p};}));},[]); }
 function wl(){return new Date().toLocaleDateString("es-CL",{weekday:"long",day:"numeric",month:"long"});}
-function handleLogoError(el){
-  if(el.dataset.fallback)return;
-  el.dataset.fallback="1";
-  el.insertAdjacentHTML("afterend",'<div class="brand-fallback">Gratinata Pizza</div>');
-  el.style.display="none";
-}
+var OVEN_SVG='<svg class="oven-icon" viewBox="0 0 40 30" xmlns="http://www.w3.org/2000/svg"><path d="M4 27 V14 A16 16 0 0 1 36 14 V27 Z" fill="currentColor"/><rect x="1" y="25" width="38" height="3.5" rx="1" fill="currentColor"/></svg>';
 // --- Paso proporcional al tamano del item ---
 function stepOf(m){if(m>=50)return 10;if(m>=20)return 5;return 1;}
 function buzz(ms){try{if(navigator.vibrate)navigator.vibrate(ms||12);}catch(e){}}
@@ -385,7 +382,7 @@ function toast(txt){
 function confetti(){
   var old=document.getElementById("cf");if(old)old.remove();
   var wrap=document.createElement("div");wrap.id="cf";
-  var cols=["#c99a2e","#f2e3bb","#3f7d4f","#fffdf9"];
+  var cols=["#a8402f","#f2eee3","#4f6b4f","#211d18"];
   for(var i=0;i<44;i++){
     var p=document.createElement("div");p.className="cfp";
     p.style.left=(Math.random()*100)+"%";
@@ -452,7 +449,7 @@ function bump(p,n,d,m){
 }
 function render(){
   if(!S.auth.role){
-    var lh='<div class="lockwrap"><img class="lock-logo" src="./logo-header.png" alt="Gratinata Pizza" onerror="handleLogoError(this)"/>';
+    var lh='<div class="lockwrap"><div style="display:flex;flex-direction:column;align-items:center;gap:6px">'+OVEN_SVG.replace('class="oven-icon"','class="lock-logo"')+'<div class="brand-title">GRATINATA</div><div class="brand-tag">Cocina Artesanal</div></div>';
     lh+='<div class="lock-card"><div class="lock-lbl">Ingresa tu PIN</div><input class="lock-inp" id="inp-pin" type="password" inputmode="numeric" maxlength="6" autofocus value="'+S.auth.pinInput+'"/>';
     if(S.auth.err)lh+='<div class="lock-err">'+S.auth.err+'</div>';
     lh+='<button class="btn btnp" id="btn-login">Entrar</button></div></div>';
@@ -483,7 +480,7 @@ function render(){
   if(!isAdmin&&(ROLE_MODES[S.auth.role]||[]).indexOf(S.mode)===-1)S.mode=S.auth.role;
   var m=S.mode,tab=S.tab;
   var t=(m==="cierre")?0:tot(),f=(m==="cierre")?0:fil(),lw=(m==="cierre")?[]:low(),pct=t>0?Math.round(f/t*100):0;
-  var h='<div class="hdr"><div class="hdr-top"><div><img class="brand-logo" src="./logo-header.png" alt="Gratinata Pizza" onerror="handleLogoError(this)"/><div class="fecha">'+wl()+'</div></div><div style="display:flex;align-items:center;gap:8px"><button class="dark-toggle" id="btn-dark">'+( document.body.classList.contains("dark")?"\u2600\uFE0F":"\uD83C\uDF19")+'</button><button class="dark-toggle" id="btn-logout" title="Salir">\u23FB</button><div class="smsg">'+(navigator.onLine===false?'<span style="color:var(--warn)">&#9679; Sin wifi</span>':S.msg)+'</div></div></div>';
+  var h='<div class="hdr"><div class="hdr-top"><div class="brand">'+OVEN_SVG+'<div><div class="brand-title">GRATINATA</div><div class="brand-tag">'+wl()+'</div></div></div><div style="display:flex;align-items:center;gap:8px"><button class="dark-toggle" id="btn-dark">'+( document.body.classList.contains("dark")?"\u2600\uFE0F":"\uD83C\uDF19")+'</button><button class="dark-toggle" id="btn-logout" title="Salir">\u23FB</button><div class="smsg">'+(navigator.onLine===false?'<span style="color:var(--warn)">&#9679; Sin wifi</span>':S.msg)+'</div></div></div>';
   if(navigator.onLine===false)h+='<div style="background:var(--warn-soft);color:var(--warn);font-size:11.5px;text-align:center;padding:5px 8px">Sin conexion: tus cambios se guardan en el celular y se suben solos cuando vuelva el wifi</div>';
   var myModes=ROLE_MODES[S.auth.role]||[];
   if(myModes.length>1){
@@ -652,7 +649,7 @@ function render(){
     h+='<div style="display:flex;gap:6px;align-items:center;width:100%"><div class="ftrc">'+f+'/'+t+' contados</div><button class="btn btnr" style="width:auto;padding:7px 12px;font-size:12px" id="btn-rst">Reset</button></div>';
     h+='</div></div>';
   }
-  if(m==="administrador"&&tab==="ver")h+='<div class="ftr"><div class="ftri"><button class="btn btns" style="flex:1;font-size:12px" id="btn-inv">Inventario</button><button class="btn btnp" style="flex:1;font-size:11px" id="btn-ped">Pedido</button><button class="btn" style="flex:1;font-size:11px;background:#25d366;color:#fff" id="btn-wa">WhatsApp</button><button class="btn" style="flex:1;font-size:11px;background:var(--gold-soft);color:var(--ink)" id="btn-hist">Historial</button><button class="btn btnr" style="flex:1;font-size:11px" id="btn-rst">Reset</button></div></div>';
+  if(m==="administrador"&&tab==="ver")h+='<div class="ftr"><div class="ftri"><button class="btn btns" style="flex:1;font-size:12px" id="btn-inv">Inventario</button><button class="btn btnp" style="flex:1;font-size:11px" id="btn-ped">Pedido</button><button class="btn" style="flex:1;font-size:11px;background:#25d366;color:#fff" id="btn-wa">WhatsApp</button><button class="btn" style="flex:1;font-size:11px;background:var(--cream);color:var(--ink);border:1px solid var(--line)" id="btn-hist">Historial</button><button class="btn btnr" style="flex:1;font-size:11px" id="btn-rst">Reset</button></div></div>';
   if(S.modal)h+='<div class="mo"><div class="md"><div class="mt">Editar producto</div><div class="fld"><label>Nombre</label><input id="em-n" value="'+S.modal.nombre+'"/></div><div class="fld"><label>Minimo</label><input type="number" id="em-m" min="0" step="0.5" value="'+S.modal.min+'"/></div><div class="mbs"><button class="btn btns" id="btn-ce">Cancelar</button><button class="btn btnp" id="btn-se">Guardar</button></div></div></div>';
   if(S.hist)h+='<div class="mo"><div class="md" style="max-width:440px;max-height:80vh;overflow:auto"><div class="mt">Historial de pedidos</div>'+S.hist+'<div class="mbs"><button class="btn btns" id="btn-hist-ce">Cerrar</button></div></div></div>';
   if(S.waPick)h+='<div class="mo"><div class="md"><div class="mt">Enviar pedido por WhatsApp</div>'+S.waPick.map(function(e,idx){
