@@ -225,8 +225,8 @@ var INV_RECEPCION=[
   {p:"SUPERMERCADO",wa:"",i:[{n:"Confort",m:0},{n:"Papel interfoleado",m:0},{n:"Marshmallow",m:0},{n:"Te english breakfast",m:0},{n:"Te earl grey",m:0},{n:"Te indian chai",m:0}]}
 ];
 var AREAS={
-  cocina:{label:"Cocina",catDoc:"catalogo",stockCol:"stock",pedidosCol:"pedidos",seed:INV_COCINA},
-  recepcion:{label:"Recepcion",catDoc:"catalogoRecepcion",stockCol:"stockRecepcion",pedidosCol:"pedidosRecepcion",seed:INV_RECEPCION}
+  cocina:{label:"Cocina",catDoc:"catalogo",stockCol:"stock",pedidosCol:"pedidos",rachaDoc:"rachaCocina",seed:INV_COCINA},
+  recepcion:{label:"Recepcion",catDoc:"catalogoRecepcion",stockCol:"stockRecepcion",pedidosCol:"pedidosRecepcion",rachaDoc:"rachaRecepcion",seed:INV_RECEPCION}
 };
 var CIERRE_AREAS_SEED=[
   {n:"BAÑO",t:["Cambiar bolsa de basura","Limpiar papelero","Limpiar espejo","Limpiar taza WC","Rellenar toallas"]},
@@ -251,10 +251,10 @@ var S={mode:"cocina",adminArea:"cocina",cierreDept:"cocina",tab:"ver",msg:"",mod
   alertaWa:"",
   auth:{role:null,pinInput:"",err:""},
   areas:{
-    cocina:{cat:INV_COCINA,sk:{},pv:{},exp:{}},
-    recepcion:{cat:INV_RECEPCION,sk:{},pv:{},exp:{}}
+    cocina:{cat:INV_COCINA,sk:{},pv:{},exp:{},racha:{actual:0,mejor:0,ultimaFecha:""}},
+    recepcion:{cat:INV_RECEPCION,sk:{},pv:{},exp:{},racha:{actual:0,mejor:0,ultimaFecha:""}}
   },
-  cierre:{subtab:"checklist",nombreInput:"",newAreaName:"",newTaskInput:{},
+  cierre:{subtab:"checklist",nombreInput:"",newAreaName:"",newTaskInput:{},ranking:null,
     deptos:{
       cocina:{areas:CIERRE_AREAS_SEED,turno:null,hist:null,exp:{}},
       recepcion:{areas:[],turno:null,hist:null,exp:{}}
@@ -310,6 +310,10 @@ function load(){
       render();
       db.collection(cfg.stockCol).doc(wk()).onSnapshot(function(s){if(s.exists){a.sk=s.data().entries||{};if(!escribiendo)render();}});
     });
+    db.collection("gratinata").doc(cfg.rachaDoc).get().then(function(r){
+      if(r.exists)a.racha=Object.assign({actual:0,mejor:0,ultimaFecha:""},r.data());
+      render();
+    }).catch(function(e){console.error(cfg.rachaDoc,e);});
   });
   Object.keys(CIERRE_DEPTOS).forEach(function(dept){
     var cfg=CIERRE_DEPTOS[dept], c=S.cierre.deptos[dept];
@@ -357,7 +361,7 @@ function updStock(p,n,v){
   }
   refreshChip(p);refreshProgress();
   if(!wasP&&provDone(p)&&fil()!==tot()){buzz([14,60,14]);toast(p+" listo");}
-  if(!wasAll&&tot()>0&&fil()===tot()){buzz([20,80,20,80,20]);confetti();toast("\u00a1Inventario completo!");}
+  if(!wasAll&&tot()>0&&fil()===tot()){buzz([20,80,20,80,20]);confetti();toast("\u00a1Inventario completo!");checkRacha();}
   saveS();
 }
 function tot(){return AR().cat.reduce(function(a,g){return a+g.i.length;},0);}
@@ -486,7 +490,10 @@ function render(){
     });
     h+='</div>';
   }
-  if(m!=="cierre")h+='<div class="pb-lbl"><span class="prog-msg">'+progMsg(pct)+'</span><span>'+f+'/'+t+'</span></div><div class="pb"><div class="pbf" style="width:'+pct+'%"></div></div></div>';
+  if(m!=="cierre"){
+    var rachaTxt=(m==="cocina"||m==="recepcion")?AR().racha.actual:0;
+    h+='<div class="pb-lbl"><span class="prog-msg">'+progMsg(pct)+(rachaTxt>1?' &middot; RACHA '+rachaTxt+'D':'')+'</span><span>'+f+'/'+t+'</span></div><div class="pb"><div class="pbf" style="width:'+pct+'%"></div></div></div>';
+  }
   else h+='</div>';
   if(m==="administrador"){
     h+='<div class="ap">';
@@ -533,6 +540,7 @@ function render(){
     h+='<button class="atb'+(S.cierre.subtab==="checklist"?" active":"")+'" data-ctab="checklist">Checklist</button>';
     h+='<button class="atb'+(S.cierre.subtab==="historial"?" active":"")+'" data-ctab="historial">Historial</button>';
     h+='<button class="atb'+(S.cierre.subtab==="areas"?" active":"")+'" data-ctab="areas">Areas</button>';
+    h+='<button class="atb'+(S.cierre.subtab==="ranking"?" active":"")+'" data-ctab="ranking">Ranking</button>';
     h+='</div>';
     if(S.cierre.subtab==="checklist"){
       if(!CR().turno){
@@ -580,6 +588,10 @@ function render(){
         }
         h+='</div>';
       });
+    }
+    if(S.cierre.subtab==="ranking"){
+      if(CR().ranking===null){verRanking();}
+      h+='<div class="af">'+(CR().ranking||'<div style="text-align:center;color:var(--sub);font-size:12px">Cargando...</div>')+'</div>';
     }
     h+='</div>';
   }
@@ -712,7 +724,12 @@ function bindEvents(){
     el.addEventListener("click",function(){S.cierreDept=this.dataset.cdept;render();});
   });
   document.querySelectorAll("[data-ctab]").forEach(function(el){
-    el.addEventListener("click",function(){S.cierre.subtab=this.dataset.ctab;if(this.dataset.ctab==="historial")CR().hist=null;render();});
+    el.addEventListener("click",function(){
+      S.cierre.subtab=this.dataset.ctab;
+      if(this.dataset.ctab==="historial")CR().hist=null;
+      if(this.dataset.ctab==="ranking")CR().ranking=null;
+      render();
+    });
   });
   var icn=document.getElementById("inp-cnombre");
   if(icn)icn.addEventListener("input",function(){S.cierre.nombreInput=this.value;});
@@ -897,6 +914,50 @@ function limpiarPedidosAntiguos(){
 }
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
 // ===== Cierre (checklist de cierre por area, por departamento) =====
+// ===== Racha de inventario perfecto =====
+function diffDias(a,b){return Math.round((new Date(b)-new Date(a))/86400000);}
+function checkRacha(){
+  var area=curArea(),cfg=AREAS[area],a=AR();
+  var hoy=today();
+  if(a.racha.ultimaFecha===hoy)return;
+  var d=a.racha.ultimaFecha?diffDias(a.racha.ultimaFecha,hoy):null;
+  a.racha=Object.assign({},a.racha,{actual:(d===1?a.racha.actual+1:1),ultimaFecha:hoy});
+  a.racha.mejor=Math.max(a.racha.mejor||0,a.racha.actual);
+  db.collection("gratinata").doc(cfg.rachaDoc).set(a.racha);
+  render();
+  if(a.racha.actual>1){setTimeout(function(){buzz([10,40,10,40,10]);toast("Racha: "+a.racha.actual+" dias");},1600);}
+}
+// ===== Niveles por cantidad de cierres completados =====
+var NIVELES=[{min:30,n:"MAESTRO DEL CIERRE"},{min:16,n:"JEFE DE TURNO"},{min:8,n:"COCINERO"},{min:3,n:"AYUDANTE"},{min:0,n:"APRENDIZ"}];
+function nivelPorCantidad(n){for(var i=0;i<NIVELES.length;i++){if(n>=NIVELES[i].min)return NIVELES[i].n;}return NIVELES[NIVELES.length-1].n;}
+function verRanking(){
+  var cfg=CIERRE_DEPTOS[CD()];
+  CR().ranking='<div style="text-align:center;color:var(--sub);font-size:12px;padding:10px 0">Cargando...</div>';render();
+  db.collection(cfg.histCol).get().then(function(snap){
+    var counts={};
+    snap.forEach(function(doc){var d=doc.data();var n=(d.nombre||"?").trim();counts[n]=(counts[n]||0)+1;});
+    var arr=Object.keys(counts).map(function(n){return {nombre:n,cant:counts[n]};});
+    arr.sort(function(a,b){return b.cant-a.cant;});
+    if(arr.length===0){CR().ranking='<div style="text-align:center;color:var(--sub);font-size:12px;padding:10px 0">Aun no hay cierres registrados</div>';render();return;}
+    var out="";
+    arr.forEach(function(r,i){
+      out+='<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px dotted var(--line-soft)">';
+      out+='<div style="font-weight:700;font-size:13px;width:20px">'+(i+1)+'</div>';
+      out+='<div style="flex:1;min-width:0"><div style="font-weight:700;font-size:12.5px;text-transform:uppercase">'+esc(r.nombre)+'</div><div style="font-size:10px;color:var(--accent);letter-spacing:.03em">'+nivelPorCantidad(r.cant)+'</div></div>';
+      out+='<div style="font-weight:700;font-size:13px">'+r.cant+'</div>';
+      out+='</div>';
+    });
+    CR().ranking=out;render();
+  }).catch(function(e){CR().ranking='<div style="text-align:center;color:var(--danger);font-size:12px;padding:10px 0">Error: '+esc(e.message||e.code||String(e))+'</div>';render();});
+}
+function cierresDe(nombre,cb){
+  var cfg=CIERRE_DEPTOS[CD()];
+  db.collection(cfg.histCol).get().then(function(snap){
+    var n=0;
+    snap.forEach(function(doc){if((doc.data().nombre||"").trim().toLowerCase()===nombre.trim().toLowerCase())n++;});
+    cb(n);
+  }).catch(function(){cb(null);});
+}
 function cierreTot(){return CR().areas.reduce(function(a,g){return a+g.t.length;},0);}
 function cierreFil(){var t=CR().turno;if(!t)return 0;return Object.keys(t.tareas||{}).filter(function(k){return t.tareas[k];}).length;}
 function saveCierreAreas(){db.collection("gratinata").doc(CIERRE_DEPTOS[CD()].areasDoc).set({areas:CR().areas});}
@@ -956,6 +1017,14 @@ function finalizarTurno(){
     S.msg=(pend.length>0&&S.alertaWa)?"Guardado, aviso enviado":"Checklist guardado";
     render();
     setTimeout(function(){S.msg="";render();},2500);
+    cierresDe(t.nombre,function(n){
+      if(n===null)return;
+      var nivelAntes=nivelPorCantidad(n-1),nivelAhora=nivelPorCantidad(n);
+      setTimeout(function(){
+        if(nivelAhora!==nivelAntes){buzz([15,50,15,50,15,50,15]);confetti();toast("¡Subiste a "+nivelAhora+"!");}
+        else{buzz(10);toast(t.nombre.split(" ")[0]+": "+n+" cierres ("+nivelAhora+")");}
+      },1700);
+    });
   }).catch(function(e){
     alert("No se pudo guardar el checklist: "+(e.message||e.code||e));
   });
