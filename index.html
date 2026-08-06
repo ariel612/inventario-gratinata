@@ -843,6 +843,8 @@ function savePedido(){
   var pedido={fecha:new Date().toLocaleDateString("es-CL"),items:items};
   db.collection(pedidosCol).doc(key).set(pedido).then(function(){
     limpiarPedidosAntiguos();
+  }).catch(function(e){
+    alert("No se pudo guardar el registro del pedido (el mensaje de WhatsApp se abre igual): "+(e.message||e.code||e));
   });
 }
 function limpiarPedidosAntiguos(){
@@ -892,6 +894,8 @@ function finalizarTurno(){
     db.collection("cierreTurnos").doc(today()).delete();
     S.cierre.turno=null;S.msg="Checklist guardado";render();
     setTimeout(function(){S.msg="";render();},2000);
+  }).catch(function(e){
+    alert("No se pudo guardar el checklist: "+(e.message||e.code||e));
   });
 }
 function verCierreHistorial(){
@@ -905,7 +909,7 @@ function verCierreHistorial(){
       out+='<div style="margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px">'+esc(d.nombre)+'</div><div style="font-size:12px;color:var(--sub)">'+esc(d.fecha)+' &bull; '+done+' tareas completadas</div></div>';
     });
     S.cierre.hist=out;render();
-  }).catch(function(){S.cierre.hist='<div style="text-align:center;color:var(--danger);font-size:13px;padding:10px 0">Error al cargar</div>';render();});
+  }).catch(function(e){S.cierre.hist='<div style="text-align:center;color:var(--danger);font-size:12.5px;padding:10px 0">Error: '+esc(e.message||e.code||String(e))+'</div>';render();});
 }
 function addCierreArea(nombre){
   if(!nombre||!nombre.trim())return;
@@ -948,7 +952,7 @@ function verHistorial(){
       out+='</div>';
     });
     S.hist=out;render();
-  }).catch(function(){S.hist='<div style="text-align:center;color:#dc2626;font-size:13px;padding:10px 0">Error al cargar historial</div>';render();});
+  }).catch(function(e){S.hist='<div style="text-align:center;color:#dc2626;font-size:12.5px;padding:10px 0">Error: '+esc(e.message||e.code||String(e))+'</div>';render();});
 }
 function sendProvWA(entry){
   var lines=["*"+entry.p+"*"];
