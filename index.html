@@ -172,6 +172,10 @@ body.dark .dark-toggle{color:var(--text);border-color:var(--line-soft)}
 .stp-b:active{background:var(--accent-soft);border-color:var(--accent)}
 .stp-b.wide{width:34px;font-size:10px}
 body.dark .stp-b{background:#2a2419;border-color:var(--text);color:var(--text)}
+.mrow{padding:9px 2px;border-bottom:1px dashed var(--line-soft)}
+.mrow:last-child{border-bottom:none}
+.msel-btn{font-family:'Space Mono',monospace;font-size:9.5px;font-weight:700;padding:5px 7px;border:1px solid var(--line);background:var(--paper);color:var(--sub);cursor:pointer;flex-shrink:0}
+.msel-btn.on{background:var(--ink);color:var(--on-ink);border-color:var(--ink)}
 
 .row.ok .nom{color:var(--sub);text-decoration:line-through}
 .row.low{background:var(--danger-soft)}
@@ -235,17 +239,26 @@ var CIERRE_AREAS_SEED=[
   {n:"COCINA",t:[]},
   {n:"FREIDORA",t:[]}
 ];
+var CIERRE_RECEPCION_AREAS_SEED=[
+  {n:"BAÑO",t:["Sacar basura, reponer papel higienico e interfoliado, limpiar espejo"]},
+  {n:"CAJA",t:["Hacer caja"]},
+  {n:"BARRA Y RECEPCION",t:["Limpieza barra y recepcion: barrido y si es necesario trapeado","Sacar basura recepcion y barra","Orden zona recepcion: facturas en carpetas y candados en su caja","Reponer servilleteros y azucareros","Limpieza de polvo de superficies","Limpieza de vidrios exterior y vitrina cocina","Miercoles y sabado sacar contenedores basura"]},
+  {n:"CAFETERIA",t:["Limpieza vitrina muffins con alcohol: exterior e interior","Lavado deposito de agua cafetera (lunes vaciar y pasar a cocina para lavado)","Vaciar contenedor capsulas cafe / limpiar con alcohol o pasar a cocina para lavado","Reposicion bebidas y muffins por FIFO"]},
+  {n:"TERRAZA Y PLANTAS",t:["Vaciar agua embotellada a plantas a no ser que hayan sido llenadas noche anterior","Dar agua a las plantas por 1 hora: martes, jueves y sabado","Limpieza terraza: barrer hojas, sacar telaranas, instalar ampolletas, montar mesas"]},
+  {n:"BODEGA",t:["Orden zona bodega","Armados cajas pizzas y palitos (50 unidades minimo)","Inventario aseo y cafeteria dia lunes o martes a mas tardar","Inventario y pedido bebidas sabados"]}
+];
+var MISE_SEED=[{n:"Aceitunas",m:2},{n:"Ajo confitado",m:2},{n:"Alcachofa",m:1},{n:"Aros de cebolla (caja)",m:1},{n:"Albahaca",m:2},{n:"Bechamel",m:2},{n:"Cebolla Asada",m:2},{n:"Cilantro",m:2},{n:"Ciboulette",m:2},{n:"Brochetas Pollo (5 trozos por brocheta)",m:30},{n:"Brochetas Camaron (4 camarones por brocheta)",m:30},{n:"Champinon flambeado",m:1},{n:"Fruta congelada (cajas de c/u)",m:2},{n:"Hamburguesas",m:10},{n:"Lechuga deshojada",m:5},{n:"Jamon Pierna",m:2},{n:"Camaron parrillado (1,5 min) (paquetes)",m:6},{n:"Limon",m:2},{n:"Mechada Porcionada",m:3},{n:"Masas",m:200},{n:"Mantequilla ajo",m:2},{n:"Mayonesa (mangas)",m:2},{n:"Oregano linea",m:1},{n:"Pollo porcionado",m:3},{n:"Pepperoni",m:1},{n:"Panini",m:10},{n:"Pina",m:1},{n:"Pepinillo",m:1},{n:"Papas hamburguesas 150 gr (porcionadas)",m:10},{n:"Papas fritas 700 gr (porcionadas)",m:10},{n:"Parmesano",m:2},{n:"Palta Hot dog (mangas)",m:2},{n:"Pesto",m:2},{n:"Potes salsa palito y mantequilla",m:15},{n:"Queso Cheddar Laminado",m:1},{n:"Queso Azul (M)",m:1},{n:"Queso Cabra",m:2},{n:"Salsa Tomate gn",m:3},{n:"Salsa BBQ (mam)",m:2},{n:"Salsa Secreta",m:2},{n:"Mayonesa cilantro",m:1},{n:"Mayonesa ajo",m:1},{n:"Shitake polvo",m:1},{n:"Sal de camaron",m:1},{n:"T. Cherry con sal",m:2},{n:"Tocino crispy",m:1},{n:"Triangulos de mozzarella (caja)",m:1},{n:"Tiramisu",m:1},{n:"Vienesas parrilladas",m:1},{n:"Volcan chocolate",m:10},{n:"Brownies",m:12},{n:"Choclo",m:1},{n:"Helado vainilla",m:1},{n:"Jamon Serrano (paquetes)",m:6},{n:"Mechada",m:3},{n:"Pollo",m:4},{n:"Rucula",m:2},{n:"Salsa chocolate",m:1},{n:"Salsa frambuesa",m:1},{n:"T. Cherry",m:2},{n:"Vienesas",m:1},{n:"Masas 280 gr",m:120},{n:"Cebolla Morada",m:2},{n:"Pimenton crudo",m:1},{n:"T. Cherry flambeado",m:2},{n:"Queso crema",m:2},{n:"Limon en linea (zeste)",m:1},{n:"Tocino",m:1},{n:"Camaron",m:1},{n:"Mozzarella cajas",m:6},{n:"Papas fritas 650 gr",m:15},{n:"Alitas Bbq",m:6},{n:"Salsa Cheddar (mam)",m:3},{n:"Potes salsa palito",m:20},{n:"Potes mantequilla",m:20},{n:"Fruta porcionada jugo (c/u)",m:10}];
 var today=function(){var d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");};
 var wk=function(){var d=new Date(),w=Math.ceil(d.getDate()/7);return d.getFullYear()+"-"+(d.getMonth()+1)+"-w"+w;};
 var pwk=function(){var d=new Date();d.setDate(d.getDate()-7);var w=Math.ceil(d.getDate()/7);return d.getFullYear()+"-"+(d.getMonth()+1)+"-w"+w;};
 var bk=function(p,n){return p+"||"+n;};
 var CIERRE_DEPTOS={
   cocina:{label:"Cocina",areasDoc:"cierreAreas",turnosCol:"cierreTurnos",histCol:"cierreHistorial",seed:CIERRE_AREAS_SEED},
-  recepcion:{label:"Recepcion",areasDoc:"cierreAreasRecepcion",turnosCol:"cierreTurnosRecepcion",histCol:"cierreHistorialRecepcion",seed:[]}
+  recepcion:{label:"Recepcion",areasDoc:"cierreAreasRecepcion",turnosCol:"cierreTurnosRecepcion",histCol:"cierreHistorialRecepcion",seed:CIERRE_RECEPCION_AREAS_SEED}
 };
 var DEFAULT_PINS={cocina:"1111",recepcion:"2222",administrador:"9999"};
-var ROLE_MODES={cocina:["cocina","cierre"],recepcion:["recepcion","cierre"],administrador:["cocina","recepcion","cierre","administrador"]};
-var MODE_LABELS={cocina:"Cocina",recepcion:"Recepcion",cierre:"Cierre",administrador:"Admin"};
+var ROLE_MODES={cocina:["cocina","mise","cierre"],recepcion:["recepcion","cierre"],administrador:["cocina","recepcion","mise","cierre","administrador"]};
+var MODE_LABELS={cocina:"Cocina",recepcion:"Recepcion",mise:"Mise",cierre:"Cierre",administrador:"Admin"};
 var S={mode:"cocina",adminArea:"cocina",cierreDept:"cocina",tab:"ver",msg:"",modal:null,ni:{p:"",n:"",m:""},ap:"",apWa:"",q:"",hist:null,waPick:null,
   pins:Object.assign({},DEFAULT_PINS),
   alertaWa:"",
@@ -257,9 +270,10 @@ var S={mode:"cocina",adminArea:"cocina",cierreDept:"cocina",tab:"ver",msg:"",mod
   cierre:{subtab:"checklist",nombreInput:"",newAreaName:"",newTaskInput:{},ranking:null,
     deptos:{
       cocina:{areas:CIERRE_AREAS_SEED,turno:null,hist:null,exp:{}},
-      recepcion:{areas:[],turno:null,hist:null,exp:{}}
+      recepcion:{areas:CIERRE_RECEPCION_AREAS_SEED,turno:null,hist:null,exp:{}}
     }
-  }
+  },
+  mise:{subtab:"hoy",cat:MISE_SEED,dia:{linea:{},repuesto:{},producir:{},sel:{},hecho:{}},q:"",newName:"",newMin:""}
 };
 function curArea(){return S.mode==="administrador"?S.adminArea:S.mode;}
 function AR(){return S.areas[curArea()];}
@@ -326,6 +340,14 @@ function load(){
       if(!escribiendo)render();
     },function(e){console.error(cfg.turnosCol,e);});
   });
+  db.collection("gratinata").doc("miseCatalog").get().then(function(doc){
+    if(doc.exists&&doc.data().items)S.mise.cat=doc.data().items;
+    else db.collection("gratinata").doc("miseCatalog").set({items:MISE_SEED});
+  }).catch(function(e){console.error("miseCatalog",e);}).finally(function(){render();});
+  db.collection("miseDiario").doc(today()).onSnapshot(function(s){
+    if(s.exists)S.mise.dia=Object.assign({linea:{},repuesto:{},producir:{},sel:{},hecho:{}},s.data());
+    if(!escribiendo)render();
+  },function(e){console.error("miseDiario",e);});
 }
 function saveS(){
   var area=curArea(), cfg=AREAS[area], a=AR();
@@ -479,7 +501,8 @@ function render(){
   var isAdmin=S.auth.role==="administrador";
   if(!isAdmin&&(ROLE_MODES[S.auth.role]||[]).indexOf(S.mode)===-1)S.mode=S.auth.role;
   var m=S.mode,tab=S.tab;
-  var t=(m==="cierre")?0:tot(),f=(m==="cierre")?0:fil(),lw=(m==="cierre")?[]:low(),pct=t>0?Math.round(f/t*100):0;
+  var skipProg=(m==="cierre"||m==="mise");
+  var t=skipProg?0:tot(),f=skipProg?0:fil(),lw=skipProg?[]:low(),pct=t>0?Math.round(f/t*100):0;
   var h='<div class="hdr"><div class="hdr-top"><div class="brand">'+OVEN_SVG+'<div><div class="brand-title">GRATINATA</div><div class="brand-tag">'+wl()+'</div></div></div><div style="display:flex;align-items:center;gap:8px"><button class="dark-toggle" id="btn-dark">'+( document.body.classList.contains("dark")?"\u2600\uFE0F":"\uD83C\uDF19")+'</button><button class="dark-toggle" id="btn-logout" title="Salir">\u23FB</button><div class="smsg">'+(navigator.onLine===false?'<span style="color:var(--warn)">&#9679; Sin wifi</span>':S.msg)+'</div></div></div>';
   if(navigator.onLine===false)h+='<div style="background:var(--warn-soft);color:var(--warn);font-size:11.5px;text-align:center;padding:5px 8px">Sin conexion: tus cambios se guardan en el celular y se suben solos cuando vuelva el wifi</div>';
   var myModes=ROLE_MODES[S.auth.role]||[];
@@ -490,7 +513,7 @@ function render(){
     });
     h+='</div>';
   }
-  if(m!=="cierre"){
+  if(!skipProg){
     var rachaTxt=(m==="cocina"||m==="recepcion")?AR().racha.actual:0;
     h+='<div class="pb-lbl"><span class="prog-msg">'+progMsg(pct)+(rachaTxt>1?' &middot; RACHA '+rachaTxt+'D':'')+'</span><span>'+f+'/'+t+'</span></div><div class="pb"><div class="pbf" style="width:'+pct+'%"></div></div></div>';
   }
@@ -592,6 +615,46 @@ function render(){
     if(S.cierre.subtab==="ranking"){
       if(CR().ranking===null){verRanking();}
       h+='<div class="af">'+(CR().ranking||'<div style="text-align:center;color:var(--sub);font-size:12px">Cargando...</div>')+'</div>';
+    }
+    h+='</div>';
+  }
+  if(m==="mise"){
+    h+='<div class="ap">';
+    h+='<div class="atbs">';
+    h+='<button class="atb'+(S.mise.subtab==="hoy"?" active":"")+'" data-mtab="hoy">Hoy</button>';
+    h+='<button class="atb'+(S.mise.subtab==="productos"?" active":"")+'" data-mtab="productos">Productos</button>';
+    h+='</div>';
+    if(S.mise.subtab==="hoy"){
+      var selKeys=Object.keys(S.mise.dia.sel).filter(function(k){return S.mise.dia.sel[k];});
+      var doneKeys=selKeys.filter(function(k){return S.mise.dia.hecho[k];});
+      h+='<div class="sc" style="margin-bottom:12px;display:flex;justify-content:space-between;align-items:center"><div><div class="lbl">Seleccionados hoy</div><div class="val ok">'+doneKeys.length+'<span style="font-size:13px;color:var(--sub)">/'+selKeys.length+'</span></div></div></div>';
+      h+='<input class="sb" id="inp-mq" placeholder="Buscar producto..." value="'+esc(S.mise.q)+'" style="margin-bottom:10px"/>';
+      var mq=S.mise.q.trim().toLowerCase();
+      var mitems=mq?S.mise.cat.filter(function(i){return i.n.toLowerCase().indexOf(mq)!==-1;}):S.mise.cat;
+      if(mitems.length===0)h+='<div class="nores">Sin resultados</div>';
+      mitems.forEach(function(item){
+        var selected=!!S.mise.dia.sel[item.n];
+        var hecho=!!S.mise.dia.hecho[item.n];
+        var lv=S.mise.dia.linea[item.n]||"",rv=S.mise.dia.repuesto[item.n]||"",pv=S.mise.dia.producir[item.n]||"";
+        h+='<div class="mrow" data-mise="'+esc(item.n)+'">';
+        h+='<div style="display:flex;align-items:center;gap:8px">';
+        h+='<button class="msel-btn'+(selected?" on":"")+'" data-action="mtoggle">MEP</button>';
+        h+='<div class="info"><div class="nom'+(hecho?" proc":"")+'" data-action="mhecho" style="cursor:'+(selected?"pointer":"default")+'">'+esc(item.n)+'</div><div class="mn">min:'+item.m+'</div></div>';
+        if(selected)h+='<div class="chk'+(hecho?" on":"")+'" data-action="mhecho2"></div>';
+        h+='</div>';
+        h+='<div style="display:flex;gap:10px;margin:7px 0 10px 40px">';
+        h+='<div style="display:flex;align-items:center;gap:4px"><span style="font-size:9px;color:var(--sub)">L</span><input class="is" data-field="linea" value="'+esc(lv)+'"/></div>';
+        h+='<div style="display:flex;align-items:center;gap:4px"><span style="font-size:9px;color:var(--sub)">R</span><input class="is" data-field="repuesto" value="'+esc(rv)+'"/></div>';
+        h+='<div style="display:flex;align-items:center;gap:4px"><span style="font-size:9px;color:var(--sub)">P</span><input class="ip" data-field="producir" value="'+esc(pv)+'"/></div>';
+        h+='</div>';
+        h+='</div>';
+      });
+    }
+    if(S.mise.subtab==="productos"){
+      h+='<div class="af"><div class="fld"><label>Nuevo producto</label><div style="display:flex;gap:8px"><input id="inp-mname" placeholder="Nombre" value="'+esc(S.mise.newName)+'" style="flex:1"/><input id="inp-mmin" type="number" placeholder="Min" value="'+esc(S.mise.newMin)+'" style="width:60px"/></div></div><button class="btn btnp" id="btn-maddi">+ Agregar</button></div>';
+      S.mise.cat.forEach(function(item){
+        h+='<div style="display:flex;align-items:center;gap:8px;padding:8px 2px;border-bottom:1px dotted var(--line-soft)"><div style="flex:1;font-size:12.5px">'+esc(item.n)+'</div><input type="number" class="is" data-mmin="'+esc(item.n)+'" value="'+item.m+'" style="width:44px"/><button class="bd" data-mdel="'+esc(item.n)+'">Eliminar</button></div>';
+      });
     }
     h+='</div>';
   }
@@ -718,6 +781,36 @@ function bindEvents(){
       if(grp)grp.wa=this.value.replace(/[^0-9]/g,"");
     });
     el.addEventListener("blur",function(){saveCat();});
+  });
+  // ===== Mise en Place =====
+  document.querySelectorAll("[data-mtab]").forEach(function(el){
+    el.addEventListener("click",function(){S.mise.subtab=this.dataset.mtab;render();});
+  });
+  var imq=document.getElementById("inp-mq");
+  if(imq)imq.addEventListener("input",function(){S.mise.q=this.value;render();});
+  document.querySelectorAll(".mrow").forEach(function(row){
+    var name=row.dataset.mise;
+    var btn=row.querySelector('[data-action="mtoggle"]');
+    if(btn)btn.addEventListener("click",function(){toggleMiseSel(name);});
+    var nom=row.querySelector('[data-action="mhecho"]');
+    if(nom)nom.addEventListener("click",function(){toggleMiseHecho(name);});
+    var chk2=row.querySelector('[data-action="mhecho2"]');
+    if(chk2)chk2.addEventListener("click",function(){toggleMiseHecho(name);});
+    row.querySelectorAll("input[data-field]").forEach(function(inp){
+      inp.addEventListener("input",function(){updMiseField(name,this.dataset.field,this.value);});
+    });
+  });
+  var imn=document.getElementById("inp-mname");
+  if(imn)imn.addEventListener("input",function(){S.mise.newName=this.value;});
+  var imm=document.getElementById("inp-mmin");
+  if(imm)imm.addEventListener("input",function(){S.mise.newMin=this.value;});
+  var bmai=document.getElementById("btn-maddi");
+  if(bmai)bmai.addEventListener("click",function(){addMiseItem(S.mise.newName,S.mise.newMin);});
+  document.querySelectorAll("[data-mmin]").forEach(function(el){
+    el.addEventListener("input",function(){editMiseMin(this.dataset.mmin,this.value);});
+  });
+  document.querySelectorAll("[data-mdel]").forEach(function(el){
+    el.addEventListener("click",function(){removeMiseItem(this.dataset.mdel);});
   });
   // ===== Cierre =====
   document.querySelectorAll("[data-cdept]").forEach(function(el){
@@ -957,6 +1050,58 @@ function cierresDe(nombre,cb){
     snap.forEach(function(doc){if((doc.data().nombre||"").trim().toLowerCase()===nombre.trim().toLowerCase())n++;});
     cb(n);
   }).catch(function(){cb(null);});
+}
+// ===== Mise en Place =====
+var miseSaveTO=null;
+function saveMiseDia(){
+  clearTimeout(miseSaveTO);
+  S.msg="Guardando...";
+  miseSaveTO=setTimeout(function(){
+    db.collection("miseDiario").doc(today()).set(S.mise.dia).then(function(){
+      S.msg="Guardado";render();setTimeout(function(){S.msg="";render();},1500);
+    }).catch(function(e){S.msg="Error";render();});
+  },500);
+}
+function updMiseField(name,field,val){
+  S.mise.dia=Object.assign({},S.mise.dia);
+  S.mise.dia[field]=Object.assign({},S.mise.dia[field]);
+  S.mise.dia[field][name]=val;
+  saveMiseDia();
+}
+function toggleMiseSel(name){
+  S.mise.dia=Object.assign({},S.mise.dia,{sel:Object.assign({},S.mise.dia.sel),hecho:Object.assign({},S.mise.dia.hecho)});
+  var nuevo=!S.mise.dia.sel[name];
+  S.mise.dia.sel[name]=nuevo;
+  if(!nuevo)S.mise.dia.hecho[name]=false;
+  buzz(10);render();saveMiseDia();
+}
+function toggleMiseHecho(name){
+  if(!S.mise.dia.sel[name])return;
+  S.mise.dia=Object.assign({},S.mise.dia,{hecho:Object.assign({},S.mise.dia.hecho)});
+  S.mise.dia.hecho[name]=!S.mise.dia.hecho[name];
+  buzz(10);
+  var sel=Object.keys(S.mise.dia.sel).filter(function(k){return S.mise.dia.sel[k];});
+  var done=sel.filter(function(k){return S.mise.dia.hecho[k];});
+  render();saveMiseDia();
+  if(sel.length>0&&done.length===sel.length){buzz([20,80,20,80,20]);confetti();toast("¡Mise en place completa!");}
+}
+function saveMiseCat(){db.collection("gratinata").doc("miseCatalog").set({items:S.mise.cat});}
+function addMiseItem(nombre,min){
+  if(!nombre||!nombre.trim())return;
+  var n=nombre.trim();
+  if(S.mise.cat.some(function(i){return i.n.toLowerCase()===n.toLowerCase();})){alert('"'+n+'" ya existe en la lista');return;}
+  S.mise.cat=S.mise.cat.concat([{n:n,m:parseFloat(min)||0}]);
+  S.mise.newName="";S.mise.newMin="";
+  saveMiseCat();render();
+}
+function removeMiseItem(nombre){
+  if(!confirm('¿Eliminar "'+nombre+'" de Mise en Place?'))return;
+  S.mise.cat=S.mise.cat.filter(function(i){return i.n!==nombre;});
+  saveMiseCat();render();
+}
+function editMiseMin(nombre,min){
+  S.mise.cat=S.mise.cat.map(function(i){return i.n!==nombre?i:Object.assign({},i,{m:parseFloat(min)||0});});
+  saveMiseCat();
 }
 function cierreTot(){return CR().areas.reduce(function(a,g){return a+g.t.length;},0);}
 function cierreFil(){var t=CR().turno;if(!t)return 0;return Object.keys(t.tareas||{}).filter(function(k){return t.tareas[k];}).length;}
