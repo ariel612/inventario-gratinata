@@ -277,7 +277,10 @@ var S={mode:"cocina",adminArea:"cocina",cierreDept:"cocina",tab:"ver",msg:"",mod
       recepcion:{areas:CIERRE_RECEPCION_AREAS_SEED,turno:null,hist:null,exp:{}}
     }
   },
-  mise:{subtab:"hoy",cat:MISE_SEED,dia:{linea:{},repuesto:{},producir:{},sel:{},hecho:{}},q:"",newName:"",newMin:"",hist:null}
+  mise:{subtab:"hoy",cat:MISE_SEED,dia:{linea:{},repuesto:{},producir:{},sel:{},hecho:{}},q:"",newName:"",newMin:"",hist:null},
+  recetas:{productos:{},exp:{},q:"",newIng:{},calcOpen:{},calcInput:{}},
+  sugerencias:{},
+  ventasProductos:{}
 };
 function curArea(){return S.mode==="administrador"?S.adminArea:S.mode;}
 function AR(){return S.areas[curArea()];}
@@ -353,7 +356,21 @@ function load(){
     if(s.exists)S.mise.dia=Object.assign({linea:{},repuesto:{},producir:{},sel:{},hecho:{}},s.data());
     render();
   },function(e){console.error("miseDiario",e);});
+  db.collection("gratinata").doc("recetas").onSnapshot(function(doc){
+    if(escribiendoRecetas)return;
+    if(doc.exists&&doc.data().productos)S.recetas.productos=doc.data().productos;
+    render();
+  },function(e){console.error("recetas",e);});
+  db.collection("gratinata").doc("sugerencias").onSnapshot(function(doc){
+    S.sugerencias=(doc.exists&&doc.data().items)?doc.data().items:{};
+    render();
+  },function(e){console.error("sugerencias",e);});
+  db.collection("gratinata").doc("ventasProductos").onSnapshot(function(doc){
+    S.ventasProductos=(doc.exists&&doc.data().items)?doc.data().items:{};
+    render();
+  },function(e){console.error("ventasProductos",e);});
 }
+var escribiendoRecetas=false, escribiendoRecetasTO=null;
 function saveS(){
   var area=curArea(), cfg=AREAS[area], a=AR();
   clearTimeout(st[area]);
@@ -537,6 +554,7 @@ function render(){
     h+='<button class="atb'+(tab==="editar"?" active":"")+'" data-t="editar">Editar</button>';
     h+='<button class="atb'+(tab==="agregar"?" active":"")+'" data-t="agregar">Agregar</button>';
     h+='<button class="atb'+(tab==="seguridad"?" active":"")+'" data-t="seguridad">PINs</button>';
+    h+='<button class="atb'+(tab==="recetas"?" active":"")+'" data-t="recetas">Recetas</button>';
     h+='</div>';
     if(tab==="agregar"){
       h+='<div class="af"><div class="fld"><label>Proveedor</label><select id="sel-prov"><option value="">Seleccionar</option>'+AR().cat.map(function(g){return '<option value="'+g.p+'">'+g.p+'</option>';}).join('')+'<option value="__nuevo__">+ Nuevo</option></select></div>';
@@ -552,6 +570,49 @@ function render(){
       h+='<div class="fld"><label>PIN Administrador</label><input type="tel" inputmode="numeric" maxlength="6" id="pin-administrador" value="'+S.pins.administrador+'"/></div>';
       h+='<button class="btn btnp" id="btn-save-pins">Guardar PINs</button></div>';
       h+='<div class="af" style="margin-top:10px"><div class="fld"><label>WhatsApp para avisos de cierre incompleto</label><input type="tel" inputmode="numeric" id="inp-alertawa" placeholder="56912345678" value="'+esc(S.alertaWa)+'"/></div><button class="btn btnp" id="btn-save-alertawa">Guardar</button></div>';
+    }
+    if(tab==="recetas"){
+      h+='<div class="sb-wrap" style="padding:0 0 10px"><input class="sb" id="inp-rq" placeholder="Buscar producto de Fudo..." value="'+esc(S.recetas.q)+'"/></div>';
+      var rq=S.recetas.q.trim().toLowerCase();
+      var nombresProd=Object.keys(S.recetas.productos).sort();
+      if(rq)nombresProd=nombresProd.filter(function(n){return n.toLowerCase().indexOf(rq)!==-1;});
+      if(nombresProd.length===0)h+='<div class="nores">Sin recetas cargadas todavia. Usa la herramienta de importacion.</div>';
+      nombresProd.forEach(function(prodName){
+        var lineas=S.recetas.productos[prodName];
+        var sinDef=lineas.filter(function(l){return l.cant==null;}).length;
+        var open=!!S.recetas.exp[prodName];
+        h+='<div class="prov-grp'+(open?" open":"")+'"><div class="prov" data-rprov="'+esc(prodName)+'"><span class="prov-name">'+(sinDef>0?'<span class="prov-dot"></span>':'')+'<span>'+esc(prodName)+'</span></span><span class="prov-lead"></span><span class="prov-meta"><span class="prov-ct">'+lineas.length+' ing.'+(sinDef>0?" &bull; "+sinDef+" sin def.":"")+'</span><span class="prov-chev'+(open?" open":"")+'">&#9656;</span></span></div>';
+        if(open){
+          h+='<div class="prov-items"><div style="padding:6px 2px">';
+          lineas.forEach(function(linea,idx){
+            var key=prodName+"||"+idx;
+            var calcAbierto=!!S.recetas.calcOpen[key];
+            h+='<div style="padding:6px 0;border-bottom:1px dotted var(--line-soft)'+(linea.cant==null?';background:var(--warn-soft)':'')+'">';
+            h+='<div style="display:flex;align-items:center;gap:6px">';
+            h+='<div style="flex:1;font-size:12px">'+esc(linea.n)+(linea.cant==null?' <span style="color:var(--warn);font-size:10px">(sin definir)</span>':'')+'</div>';
+            h+='<input type="number" step="any" class="is" style="width:52px" data-rline="'+idx+'" data-rprod="'+esc(prodName)+'" data-rfield="cant" value="'+(linea.cant!=null?linea.cant:"")+'" placeholder="cant"/>';
+            h+='<input type="text" class="is" style="width:38px" data-rline="'+idx+'" data-rprod="'+esc(prodName)+'" data-rfield="u" value="'+esc(linea.u||"")+'" placeholder="u"/>';
+            if(linea.cant==null)h+='<button class="be" data-rcalctoggle="'+key+'" style="font-size:10px">Calc.</button>';
+            h+='<button class="bd" data-rdel="'+idx+'" data-rprodel="'+esc(prodName)+'">X</button>';
+            h+='</div>';
+            if(calcAbierto){
+              var vendidas=unidadesVendidasDe(linea.n);
+              var r=calcularCantidadPorPorcion(prodName,idx);
+              h+='<div style="margin:6px 0 2px;padding:8px;background:var(--paper);border:1px dashed var(--line)">';
+              h+='<div style="font-size:10.5px;color:var(--sub);margin-bottom:4px">Unidades vendidas de platos con este ingrediente (7 dias): <b>'+vendidas+'</b></div>';
+              h+='<div style="display:flex;gap:6px;align-items:center"><span style="font-size:10.5px">Compraste:</span><input type="number" step="any" data-rcalcinput="'+key+'" value="'+esc(S.recetas.calcInput[key]||"")+'" style="width:60px;padding:5px;border:1px solid var(--line);font-size:12px"/><span style="font-size:10.5px">'+esc(linea.u||"gr")+'</span></div>';
+              if(r)h+='<div style="margin-top:6px;font-size:11.5px">= <b>'+r.resultado.toFixed(2)+' '+esc(linea.u||"gr")+'</b> por porcion &nbsp; <button class="btn btnp" style="width:auto;padding:5px 10px;margin:0;font-size:10.5px" data-rcalcaplicar="'+key+'">Usar este valor</button></div>';
+              else h+='<div style="margin-top:6px;font-size:10.5px;color:var(--sub)">Ingresa la cantidad comprada'+(vendidas===0?" (no hay ventas registradas de este producto en el periodo)":"")+'</div>';
+              h+='</div>';
+            }
+            h+='</div>';
+          });
+          var ni=S.recetas.newIng[prodName]||{n:"",cant:"",u:"gr"};
+          h+='<div style="display:flex;gap:6px;margin-top:8px"><input placeholder="Nuevo ingrediente" data-rnewn="'+esc(prodName)+'" value="'+esc(ni.n)+'" style="flex:1;padding:7px 8px;border:1px solid var(--line);font-size:12px"/><input placeholder="cant" type="number" data-rnewc="'+esc(prodName)+'" value="'+esc(ni.cant)+'" style="width:50px;padding:7px 4px;border:1px solid var(--line);font-size:12px"/><input placeholder="u" data-rnewu="'+esc(prodName)+'" value="'+esc(ni.u)+'" style="width:36px;padding:7px 4px;border:1px solid var(--line);font-size:12px"/><button class="btn btnp" style="width:auto;padding:7px 12px;margin:0;font-size:11px" data-raddprod="'+esc(prodName)+'">+</button></div>';
+          h+='</div></div>';
+        }
+        h+='</div>';
+      });
     }
     h+='</div>';
   }
@@ -707,6 +768,8 @@ function render(){
         if(m==="cocina"||m==="recepcion")h+='<div class="chk'+(pr?" on":"")+'" data-action="tog"></div>';
         h+='<div class="info"><div class="nom'+(pr&&(m==="cocina"||m==="recepcion")?" proc":"")+'">'+item.n+'</div>';
         if(item.m>0)h+='<div class="mn'+(bajo?" bajo":"")+'">min:'+item.m+(bajo?" BAJO":"")+'</div>';
+        var sug=S.sugerencias[item.n];
+        if(sug)h+='<div class="mn" style="color:var(--accent)">sugerido: '+Math.round(sug)+'</div>';
         h+='</div>';
         if(m==="administrador"&&tab==="ver"&&df!==null)h+='<span class="df '+(df>=0?"up":"dn")+'">'+(df>=0?"+":"")+df.toFixed(1)+'</span>';
         if(m==="administrador"&&tab==="editar"){
@@ -980,6 +1043,53 @@ function bindEvents(){
       S.msg="Guardado";render();setTimeout(function(){S.msg="";render();},2000);
     });
   });
+  // ===== Recetas =====
+  var irq=document.getElementById("inp-rq");
+  if(irq)irq.addEventListener("input",function(){S.recetas.q=this.value;render();});
+  document.querySelectorAll("[data-rprov]").forEach(function(el){
+    el.addEventListener("click",function(){var n=this.dataset.rprov;S.recetas.exp[n]=!S.recetas.exp[n];render();});
+  });
+  document.querySelectorAll("[data-rline]").forEach(function(el){
+    el.addEventListener("input",function(){
+      updRecetaLinea(this.dataset.rprod,parseInt(this.dataset.rline,10),this.dataset.rfield,this.value);
+    });
+  });
+  document.querySelectorAll("[data-rdel]").forEach(function(el){
+    el.addEventListener("click",function(){removeRecetaLinea(this.dataset.rprodel,parseInt(this.dataset.rdel,10));});
+  });
+  document.querySelectorAll("[data-rnewn]").forEach(function(el){
+    el.addEventListener("input",function(){
+      var p=this.dataset.rnewn;
+      S.recetas.newIng[p]=Object.assign({n:"",cant:"",u:"gr"},S.recetas.newIng[p],{n:this.value});
+    });
+  });
+  document.querySelectorAll("[data-rnewc]").forEach(function(el){
+    el.addEventListener("input",function(){
+      var p=this.dataset.rnewc;
+      S.recetas.newIng[p]=Object.assign({n:"",cant:"",u:"gr"},S.recetas.newIng[p],{cant:this.value});
+    });
+  });
+  document.querySelectorAll("[data-rnewu]").forEach(function(el){
+    el.addEventListener("input",function(){
+      var p=this.dataset.rnewu;
+      S.recetas.newIng[p]=Object.assign({n:"",cant:"",u:"gr"},S.recetas.newIng[p],{u:this.value});
+    });
+  });
+  document.querySelectorAll("[data-raddprod]").forEach(function(el){
+    el.addEventListener("click",function(){addRecetaLinea(this.dataset.raddprod);});
+  });
+  document.querySelectorAll("[data-rcalctoggle]").forEach(function(el){
+    el.addEventListener("click",function(){var k=this.dataset.rcalctoggle;S.recetas.calcOpen[k]=!S.recetas.calcOpen[k];render();});
+  });
+  document.querySelectorAll("[data-rcalcinput]").forEach(function(el){
+    el.addEventListener("input",function(){S.recetas.calcInput[this.dataset.rcalcinput]=this.value;render();});
+  });
+  document.querySelectorAll("[data-rcalcaplicar]").forEach(function(el){
+    el.addEventListener("click",function(){
+      var partes=this.dataset.rcalcaplicar.split("||");
+      aplicarCalculo(partes[0],parseInt(partes[1],10));
+    });
+  });
   var se=document.getElementById("btn-se");
   if(se)se.addEventListener("click",function(){
     var pr=S.modal.p,or=S.modal.o,nb=document.getElementById("em-n").value,mn=document.getElementById("em-m").value;
@@ -1128,6 +1238,71 @@ function removeMiseItem(nombre){
 function editMiseMin(nombre,min){
   S.mise.cat=S.mise.cat.map(function(i){return i.n!==nombre?i:Object.assign({},i,{m:parseFloat(min)||0});});
   saveMiseCat();
+}
+// ===== Recetas (Fudo producto -> ingredientes de inventario) =====
+function marcarEscribiendoRecetas(){
+  escribiendoRecetas=true;
+  clearTimeout(escribiendoRecetasTO);
+  escribiendoRecetasTO=setTimeout(function(){escribiendoRecetas=false;},2500);
+}
+function saveRecetas(){
+  marcarEscribiendoRecetas();
+  clearTimeout(recetasSaveTO);
+  S.msg="Guardando...";
+  recetasSaveTO=setTimeout(function(){
+    db.collection("gratinata").doc("recetas").set({productos:S.recetas.productos}).then(function(){
+      S.msg="Guardado";render();setTimeout(function(){S.msg="";render();},1500);
+    }).catch(function(){S.msg="Error";render();});
+  },500);
+}
+var recetasSaveTO=null;
+function updRecetaLinea(producto,idx,campo,val){
+  S.recetas.productos=Object.assign({},S.recetas.productos);
+  var lineas=S.recetas.productos[producto].slice();
+  var linea=Object.assign({},lineas[idx]);
+  if(campo==="cant")linea.cant=val===""?null:parseFloat(val);
+  else linea[campo]=val;
+  lineas[idx]=linea;
+  S.recetas.productos[producto]=lineas;
+  saveRecetas();
+}
+function addRecetaLinea(producto){
+  var datos=S.recetas.newIng[producto]||{};
+  if(!datos.n||!datos.n.trim())return;
+  S.recetas.productos=Object.assign({},S.recetas.productos);
+  var lineas=S.recetas.productos[producto].slice();
+  lineas.push({n:datos.n.trim(),cant:datos.cant?parseFloat(datos.cant):null,u:datos.u||"gr"});
+  S.recetas.productos[producto]=lineas;
+  S.recetas.newIng[producto]={n:"",cant:"",u:"gr"};
+  saveRecetas();render();
+}
+function removeRecetaLinea(producto,idx){
+  S.recetas.productos=Object.assign({},S.recetas.productos);
+  S.recetas.productos[producto]=S.recetas.productos[producto].filter(function(x,i){return i!==idx;});
+  saveRecetas();render();
+}
+function unidadesVendidasDe(ingredienteNombre){
+  var total=0;
+  Object.keys(S.recetas.productos).forEach(function(prod){
+    var usaEsteIngrediente=S.recetas.productos[prod].some(function(l){return l.n===ingredienteNombre;});
+    if(usaEsteIngrediente)total+=S.ventasProductos[prod]||0;
+  });
+  return total;
+}
+function calcularCantidadPorPorcion(producto,idx){
+  var key=producto+"||"+idx;
+  var comprado=parseFloat(S.recetas.calcInput[key]);
+  var ingNombre=S.recetas.productos[producto][idx].n;
+  var vendidas=unidadesVendidasDe(ingNombre);
+  if(!comprado||!vendidas)return null;
+  return {resultado:comprado/vendidas,vendidas:vendidas};
+}
+function aplicarCalculo(producto,idx){
+  var r=calcularCantidadPorPorcion(producto,idx);
+  if(!r)return;
+  updRecetaLinea(producto,idx,"cant",r.resultado.toFixed(2));
+  S.recetas.calcOpen[producto+"||"+idx]=false;
+  render();
 }
 function finalizarMise(){
   var selKeys=Object.keys(S.mise.dia.sel).filter(function(k){return S.mise.dia.sel[k];});
