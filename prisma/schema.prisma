@@ -1,0 +1,189 @@
+// Prisma schema — Gratinata Inventario
+// Ver plan de migración: /legacy (app original) -> Next.js + Postgres
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  COCINA
+  RECEPCION
+  ADMIN
+}
+
+enum Area {
+  COCINA
+  RECEPCION
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  username     String   @unique
+  passwordHash String
+  role         Role
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+}
+
+// Lockout anti fuerza-bruta en el login
+model LoginAttempt {
+  id        String   @id @default(cuid())
+  username  String
+  ip        String
+  success   Boolean
+  createdAt DateTime @default(now())
+
+  @@index([username, createdAt])
+}
+
+model Provider {
+  id       String    @id @default(cuid())
+  area     Area
+  name     String
+  whatsapp String?
+  orden    Int       @default(0)
+  products Product[]
+
+  @@unique([area, name])
+}
+
+model Product {
+  id           String       @id @default(cuid())
+  providerId   String
+  provider     Provider     @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  name         String
+  minStock     Float        @default(0)
+  orden        Int          @default(0)
+  stockEntries StockEntry[]
+
+  @@unique([providerId, name])
+}
+
+// Reemplaza el doc semanal `entries[proveedor||nombre]` de Firestore
+model StockEntry {
+  id        String   @id @default(cuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  weekKey   String
+  stock     Float?
+  procesado Boolean  @default(false)
+  pedido    Float?
+  updatedAt DateTime @updatedAt
+
+  @@unique([productId, weekKey])
+  @@index([weekKey])
+}
+
+model Pedido {
+  id    String   @id @default(cuid())
+  area  Area
+  fecha DateTime @default(now())
+  items Json // [{ provider, product, cantidad }]
+
+  @@index([area, fecha])
+}
+
+model Racha {
+  area        Area    @id
+  actual      Int     @default(0)
+  mejor       Int     @default(0)
+  ultimaFecha String?
+}
+
+model CierreArea {
+  id     String        @id @default(cuid())
+  depto  Area
+  nombre String
+  orden  Int           @default(0)
+  tareas CierreTarea[]
+
+  @@unique([depto, nombre])
+}
+
+model CierreTarea {
+  id           String     @id @default(cuid())
+  cierreAreaId String
+  cierreArea   CierreArea @relation(fields: [cierreAreaId], references: [id], onDelete: Cascade)
+  texto        String
+  orden        Int        @default(0)
+}
+
+// Turno de cierre abierto del día (1 por depto por fecha)
+model CierreTurno {
+  id            String   @id @default(cuid())
+  depto         Area
+  fecha         String
+  nombre        String
+  tareas        Json
+  areasSnapshot Json
+  creadoEn      DateTime @default(now())
+
+  @@unique([depto, fecha])
+}
+
+model CierreHistorial {
+  id            String   @id @default(cuid())
+  depto         Area
+  nombre        String
+  fecha         String
+  tareas        Json
+  areasSnapshot Json
+  finalizadoEn  DateTime @default(now())
+
+  @@index([depto, finalizadoEn])
+}
+
+model MiseItem {
+  id     String @id @default(cuid())
+  nombre String @unique
+  min    Float  @default(0)
+  orden  Int    @default(0)
+}
+
+model MiseDiario {
+  fecha     String   @id
+  linea     Json
+  repuesto  Json
+  producir  Json
+  sel       Json
+  hecho     Json
+  updatedAt DateTime @updatedAt
+}
+
+model MiseHistorial {
+  id         String   @id @default(cuid())
+  fecha      String
+  guardadoEn DateTime @default(now())
+  items      Json
+
+  @@index([guardadoEn])
+}
+
+model RecetaProducto {
+  id           String @id @default(cuid())
+  nombre       String @unique
+  ingredientes Json // [{ n, cant, u }]
+}
+
+// Feeds externos (Fudo POS), solo lectura desde la app
+model VentaProducto {
+  producto String @id
+  cantidad Float  @default(0)
+}
+
+model Sugerencia {
+  producto String @id
+  valor    Float
+}
+
+model ConfigAlerta {
+  id       Int     @id @default(1)
+  alertaWa String?
+}

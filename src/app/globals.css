@@ -1,0 +1,57 @@
+@import "tailwindcss";
+
+:root {
+  --ink: #1a1a1a;
+  --accent: #c9971f;
+  --accent-soft: #f2e6c4;
+  --cream: #efe9dc;
+  --paper: #f6f2e8;
+  --line: #999;
+  --line-soft: #ccc;
+  --text: #1a1a1a;
+  --sub: #7a7568;
+  --danger: #a8402f;
+  --danger-soft: #f2ddd6;
+  --warn: #7a6224;
+  --warn-soft: #ece2c4;
+  --on-ink: #efe9dc;
+  --ok: #1a1a1a;
+  --ok-soft: #e7e3d6;
+}
+
+:root[data-theme="dark"] {
+  --cream: #1a1712;
+  --paper: #221e16;
+  --line: #5a5340;
+  --line-soft: #443f30;
+  --text: #e8e2d1;
+  --sub: #a89f8a;
+  --ink: #e8e2d1;
+  --on-ink: #1a1712;
+}
+
+@theme inline {
+  --color-ink: var(--ink);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-cream: var(--cream);
+  --color-paper: var(--paper);
+  --color-line: var(--line);
+  --color-line-soft: var(--line-soft);
+  --color-text: var(--text);
+  --color-sub: var(--sub);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-on-ink: var(--on-ink);
+  --color-ok: var(--ok);
+  --color-ok-soft: var(--ok-soft);
+  --font-mono: var(--font-space-mono);
+}
+
+body {
+  background: var(--cream);
+  color: var(--text);
+  font-family: var(--font-mono), monospace;
+}
