@@ -278,7 +278,7 @@ var S={mode:"cocina",adminArea:"cocina",cierreDept:"cocina",tab:"ver",msg:"",mod
     }
   },
   mise:{subtab:"hoy",cat:MISE_SEED,dia:{linea:{},repuesto:{},producir:{},sel:{},hecho:{}},q:"",newName:"",newMin:"",hist:null},
-  recetas:{productos:{},exp:{},q:"",newIng:{},calcOpen:{},calcInput:{}},
+  recetas:{productos:{},exp:{},q:"",newIng:{},calcOpen:{},calcInput:{},calcCompraIng:"",calcCompraOpen:false},
   sugerencias:{},
   ventasProductos:{}
 };
@@ -510,8 +510,8 @@ function render(){
   }
   var focusedId=null, focusedVal=null, focusSel=null;
   var active=document.activeElement;
-  var qFocused=(active&&active.id==="inp-q");
-  var qSel=qFocused?[active.selectionStart,active.selectionEnd]:null;
+  var idFocused=(active&&active.tagName==="INPUT"&&active.id)?active.id:null;
+  var idSel=idFocused?[active.selectionStart,active.selectionEnd]:null;
   if(active&&(active.tagName==="INPUT")&&active.dataset){
     var row=active.closest(".row");
     if(row){
@@ -572,6 +572,28 @@ function render(){
       h+='<div class="af" style="margin-top:10px"><div class="fld"><label>WhatsApp para avisos de cierre incompleto</label><input type="tel" inputmode="numeric" id="inp-alertawa" placeholder="56912345678" value="'+esc(S.alertaWa)+'"/></div><button class="btn btnp" id="btn-save-alertawa">Guardar</button></div>';
     }
     if(tab==="recetas"){
+      h+='<div class="af" style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" data-rcompratoggle="1"><div class="mt" style="margin:0">Calculadora de compra</div><span class="prov-chev'+(S.recetas.calcCompraOpen?" open":"")+'">&#9656;</span></div>';
+      if(S.recetas.calcCompraOpen){
+        h+='<div style="margin-top:12px"><div class="fld"><label>Ingrediente a planificar</label><input list="lista-ingredientes" id="inp-rcompraing" placeholder="Ej: Hamburguesas, Pechuga pollo ahumada..." value="'+esc(S.recetas.calcCompraIng)+'"/><datalist id="lista-ingredientes">'+nombresIngredientesUnicos().map(function(n){return '<option value="'+esc(n)+'">';}).join('')+'</datalist></div>';
+        if(S.recetas.calcCompraIng){
+          var desg=desgloseCompraIngrediente(S.recetas.calcCompraIng);
+          if(desg.filas.length===0){
+            h+='<div class="nores">Ningun producto usa ese ingrediente exacto (revisa mayusculas/nombre exacto)</div>';
+          } else {
+            h+='<div style="margin-top:8px">';
+            desg.filas.forEach(function(f){
+              h+='<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px dotted var(--line-soft);font-size:12px">';
+              h+='<div style="flex:1">'+esc(f.producto)+' <span style="color:var(--sub)">('+f.vendidas+' vend.)</span></div>';
+              h+='<div style="font-weight:700">'+(f.subtotal!=null?(Math.round(f.subtotal*100)/100)+' '+esc(f.u||''):'<span style="color:var(--warn)">sin definir</span>')+'</div>';
+              h+='</div>';
+            });
+            h+='<div style="display:flex;justify-content:space-between;padding:10px 0 4px;font-size:14px;font-weight:700">Total sugerido<span style="color:var(--accent)">'+(Math.round(desg.total*100)/100)+' '+esc(desg.filas[0].u||'')+'</span></div>';
+            if(desg.algunSinDefinir)h+='<div style="font-size:10.5px;color:var(--warn);margin-top:4px">Algunas recetas de este ingrediente no tienen cantidad definida todavia, el total podria ser mayor. Completalas abajo en la lista de productos.</div>';
+            h+='</div>';
+          }
+        }
+      }
+      h+='</div>';
       h+='<div class="sb-wrap" style="padding:0 0 10px"><input class="sb" id="inp-rq" placeholder="Buscar producto de Fudo..." value="'+esc(S.recetas.q)+'"/></div>';
       var rq=S.recetas.q.trim().toLowerCase();
       var nombresProd=Object.keys(S.recetas.productos).sort();
@@ -818,9 +840,9 @@ function render(){
       }
     }
   }
-  if(qFocused){
-    var qi=document.getElementById("inp-q");
-    if(qi){qi.focus();try{qi.setSelectionRange(qSel[0],qSel[1]);}catch(e){}}
+  if(idFocused){
+    var qi=document.getElementById(idFocused);
+    if(qi){qi.focus();try{qi.setSelectionRange(idSel[0],idSel[1]);}catch(e){}}
   }
 }
 function bindEvents(){
@@ -1090,6 +1112,10 @@ function bindEvents(){
       aplicarCalculo(partes[0],parseInt(partes[1],10));
     });
   });
+  var brct=document.querySelector("[data-rcompratoggle]");
+  if(brct)brct.addEventListener("click",function(){S.recetas.calcCompraOpen=!S.recetas.calcCompraOpen;render();});
+  var irci=document.getElementById("inp-rcompraing");
+  if(irci)irci.addEventListener("input",function(){S.recetas.calcCompraIng=this.value;render();});
   var se=document.getElementById("btn-se");
   if(se)se.addEventListener("click",function(){
     var pr=S.modal.p,or=S.modal.o,nb=document.getElementById("em-n").value,mn=document.getElementById("em-m").value;
@@ -1303,6 +1329,35 @@ function aplicarCalculo(producto,idx){
   updRecetaLinea(producto,idx,"cant",r.resultado.toFixed(2));
   S.recetas.calcOpen[producto+"||"+idx]=false;
   render();
+}
+// ===== Calculadora de compra por ingrediente (planificacion) =====
+function nombresIngredientesUnicos(){
+  var set={};
+  Object.keys(S.recetas.productos).forEach(function(prod){
+    S.recetas.productos[prod].forEach(function(l){set[l.n]=true;});
+  });
+  return Object.keys(set).sort();
+}
+function desgloseCompraIngrediente(ingNombre){
+  var filas=[];
+  var total=0, algunSinDefinir=false;
+  Object.keys(S.recetas.productos).forEach(function(prod){
+    S.recetas.productos[prod].forEach(function(l){
+      if(l.n!==ingNombre)return;
+      var vendidas=S.ventasProductos[prod]||0;
+      if(vendidas===0)return;
+      if(l.cant==null){
+        algunSinDefinir=true;
+        filas.push({producto:prod,vendidas:vendidas,cant:null,u:l.u,subtotal:null});
+        return;
+      }
+      var subtotal=l.cant*vendidas;
+      total+=subtotal;
+      filas.push({producto:prod,vendidas:vendidas,cant:l.cant,u:l.u,subtotal:subtotal});
+    });
+  });
+  filas.sort(function(a,b){return (b.subtotal||0)-(a.subtotal||0);});
+  return {filas:filas,total:total,algunSinDefinir:algunSinDefinir};
 }
 function finalizarMise(){
   var selKeys=Object.keys(S.mise.dia.sel).filter(function(k){return S.mise.dia.sel[k];});
